@@ -1,25 +1,24 @@
+import Chat from "@app/components/Chat.tsx";
+import {AppShell, Group} from "@mantine/core";
 
-import {Button, Center, Container, TextInput} from "@mantine/core";
 
 function App() {
 
     return (
-        <>
-            <Container>
-                <Center>
-                    <p>Welcome to Toned Chat!</p>
-                </Center>
-                <Center>
-                    What shall we call you?
-                </Center>
-                <Center>
-                    <TextInput
-                        placeholder="Name"
-                    />
-                    <Button variant="filled">Get Started</Button>
-                </Center>
-            </Container>
-        </>
+        <AppShell
+            header={{height: 60}}
+            padding="md"
+        >
+            <AppShell.Header>
+                <Group h="100%" px="md">
+                    <h3>Toned Chat</h3>
+                </Group>
+            </AppShell.Header>
+            <AppShell.Main>
+                <Chat />
+            </AppShell.Main>
+        </AppShell>
+
     )
 }
 
