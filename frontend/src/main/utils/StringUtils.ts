@@ -1,13 +1,13 @@
 
 
-const isNullOrEmpty = (s: string): boolean => {
+const isNullOrEmpty = (s: string | null | undefined): boolean => {
     if (s === null || s === undefined) {
         return true;
     }
     return s.length === 0;
 }
 
-const isNullOrWhitespace = (s: string): boolean => {
+const isNullOrWhitespace = (s: string | null | undefined): boolean => {
     if (s === null || s === undefined) {
         return true;
     }
