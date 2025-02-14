@@ -1,3 +1,3 @@
 # TODO
 
-- need to setup jest
+- lint commit hook -- husky
