@@ -1,5 +1,4 @@
-import {Box, TextInput, Text, ScrollArea, Paper} from "@mantine/core";
-import classes from "@app/components/Chat.module.css";
+import {Box, TextInput, Text, ScrollArea, Paper, Button, Group, Flex} from "@mantine/core";
 
 type Message = {
     user: string;
@@ -24,8 +23,16 @@ function Chat() {
     ];
 
     return (
-        <Box h="1100px">
-            <ScrollArea h="100%">
+        <Flex direction="column" styles={{
+            root: {
+                minHeight: "calc(100vh - 100px)",
+            }
+        }}>
+            <ScrollArea styles={{
+                root: {
+                    flexGrow: 10
+                }
+            }}>
                 {messages.map((message) =>
                     <Paper shadow="xs" p="xs" m="xs">
                         <Text size="xs">{message.user}</Text>
@@ -34,12 +41,23 @@ function Chat() {
                 )}
             </ScrollArea>
 
-            <Box className={classes.inputHolder}>
+            <Box>
                 <TextInput
                     label="Chat"
+                    styles={{
+                        wrapper: {
+                            flexGrow: 10
+                        }
+                    }}
+                    inputContainer={(children) => (
+                        <Group>
+                            {children}
+                            <Button>Send</Button>
+                        </Group>
+                    )}
                 />
             </Box>
-        </Box>
+        </Flex>
 
     )
 }
