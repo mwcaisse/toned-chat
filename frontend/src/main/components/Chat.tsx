@@ -1,11 +1,18 @@
 import {Box, TextInput, Text, ScrollArea, Paper, Button, Group, Flex} from "@mantine/core";
+import {useState} from "react";
+import StringUtils from "@app/utils/StringUtils.ts";
+import ChatService from "@app/services/ChatService.ts";
 
 type Message = {
     user: string;
     message: string;
 }
 
+const chatService = new ChatService();
+
 function Chat() {
+
+    const [currentMessage, setCurrentMessage] = useState<string>("");
 
     const messages: Message[] = [
         {
@@ -21,6 +28,11 @@ function Chat() {
             message: "This is life!!"
         },
     ];
+
+    const send = () => {
+        chatService.send(currentMessage);
+        setCurrentMessage("");
+    }
 
     return (
         <Flex direction="column" styles={{
@@ -52,9 +64,16 @@ function Chat() {
                     inputContainer={(children) => (
                         <Group>
                             {children}
-                            <Button>Send</Button>
+                            <Button
+                                onClick={() => send()}
+                                disabled={StringUtils.isNullOrEmpty(currentMessage)}
+                            >
+                                Send
+                            </Button>
                         </Group>
                     )}
+                    value={currentMessage}
+                    onChange={(e) => setCurrentMessage(e.target.value)}
                 />
             </Box>
         </Flex>
