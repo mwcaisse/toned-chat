@@ -14,11 +14,12 @@ const chatService = new ChatService();
 
 function Chat() {
 
+    const [name, setName] = useState("Mitchell");
     const [currentMessage, setCurrentMessage] = useState<string>("");
     const [messages, setMessages] = useState<Message[]>([]);
 
     const send = () => {
-        chatService.send("Mitchell", currentMessage);
+        chatService.send(name, currentMessage);
         setCurrentMessage("");
     }
 
@@ -51,10 +52,23 @@ function Chat() {
                 minHeight: "calc(100vh - 100px)",
             }
         }}>
+            <Box>
+                <TextInput
+                    label="Who are you?"
+                    styles={{
+                        wrapper: {
+                            flexGrow: 10
+                        }
+                    }}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    onKeyDown={handleKeyPress}
+                />
+            </Box>
             <ScrollArea styles={{
                 root: {
                     flexGrow: 10,
-                    height: "calc(100vh - 200px)",
+                    height: "calc(100vh - 220px)",
                 }
             }}>
                 {messages.map((message) =>
