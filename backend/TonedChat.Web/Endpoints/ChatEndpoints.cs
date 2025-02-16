@@ -32,9 +32,7 @@ public static class ChatEndpoints
 
     static IResult GetHistoricalMessages(ChatHistoryService chatHistoryService)
     {
-        var allMessages = chatHistoryService.GetHistoricalMessages().Select(Encoding.UTF8.GetString);
-
-        var response = $"[{String.Join(",", allMessages)}]";
-        return Results.Text(response, contentType: "application/json");
+        var allMessages = chatHistoryService.GetHistoricalMessages();
+        return Results.Ok(allMessages);
     }
 }

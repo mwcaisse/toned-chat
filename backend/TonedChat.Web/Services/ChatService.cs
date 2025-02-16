@@ -1,7 +1,11 @@
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
+using System.Text;
+using System.Text.Json;
 using System.Threading.Channels;
 using Serilog;
+using TonedChat.Web.Models;
+using TonedChat.Web.Utils;
 
 namespace TonedChat.Web.Services;
 
@@ -10,7 +14,7 @@ public class ChatService
 
     private readonly ConcurrentDictionary<string, WebSocket> _clients;
 
-    private readonly Channel<byte[]> _messageChannel;
+    private readonly Channel<ChatMessage> _messageChannel;
 
     private readonly ChatHistoryService _chatHistoryService;
 
@@ -19,7 +23,7 @@ public class ChatService
         _chatHistoryService = chatHistoryService;
         
         _clients = new ConcurrentDictionary<string, WebSocket>();
-        _messageChannel = Channel.CreateUnbounded<byte[]>(new UnboundedChannelOptions()
+        _messageChannel = Channel.CreateUnbounded<ChatMessage>(new UnboundedChannelOptions()
         {
             SingleReader = true,
             SingleWriter = false,
@@ -39,6 +43,23 @@ public class ChatService
     private void RemoveClient(string connectionId)
     {
         _clients.TryRemove(connectionId, out _);
+    }
+
+    private async Task ProcessMessage(byte[] messageBytes)
+    {
+        var messageString = System.Text.Encoding.UTF8.GetString(messageBytes);
+        Log.Information("Received the following message from client: " + messageString);
+
+        var message = TautSerializer.Deserialize<ChatMessage>(messageString);
+        if (message == null)
+        {
+            throw new Exception("Unable to process message, incorrect format");
+        }
+
+        // Set the ID of our message
+        message.Id = Guid.NewGuid().ToString();
+        
+        await _messageChannel.Writer.WriteAsync(message, CancellationToken.None);
     }
 
     private Func<Task> CreateClientReadThread(string connectionId, WebSocket ws)
@@ -72,16 +93,11 @@ public class ChatService
                     await ws.CloseAsync(WebSocketCloseStatus.MessageTooBig, "Message exceeded buffer. Goodbye",
                         CancellationToken.None);
                 }
-                
-                //we have a text message now
+ 
                 var stringBytes = new byte[result.Count];
                 Array.Copy(buffer, 0, stringBytes, 0, result.Count);
-
-                var message = System.Text.Encoding.UTF8.GetString(stringBytes);
-                Log.Information("Received the following message from client: " + message);
-
-                // send the message to our dispatch channel
-                await _messageChannel.Writer.WriteAsync(stringBytes, CancellationToken.None);
+      
+                await ProcessMessage(stringBytes);
             }
 
             Log.Information("Connection was closed");
@@ -105,7 +121,9 @@ public class ChatService
             while (reader.TryRead(out var message) && !cancellationToken.IsCancellationRequested)
             {
                 _chatHistoryService.AddMessage(message);
-                await DispatchMessage(message, cancellationToken);
+    
+                var messageString = TautSerializer.Serialize(message);
+                await DispatchMessage(Encoding.UTF8.GetBytes(messageString), cancellationToken);
             }
         }
     }

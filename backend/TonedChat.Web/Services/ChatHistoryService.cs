@@ -1,22 +1,24 @@
+using TonedChat.Web.Models;
+
 namespace TonedChat.Web.Services;
 
 // Keeps track of historical chat messages. Messages that have been sent since the server is up
 public class ChatHistoryService
 {
 
-    private List<byte[]> _messages;
+    private List<ChatMessage> _messages;
 
     public ChatHistoryService()
     {
-        _messages = new List<byte[]>();
+        _messages = new List<ChatMessage>();
     }
 
-    public List<byte[]> GetHistoricalMessages()
+    public List<ChatMessage> GetHistoricalMessages()
     {
         return _messages;
     }
 
-    public void AddMessage(byte[] message)
+    public void AddMessage(ChatMessage message)
     {
         _messages.Add(message);
     }

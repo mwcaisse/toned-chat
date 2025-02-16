@@ -77,7 +77,7 @@ function Chat() {
                 }
             }}>
                 {messages.map((message) =>
-                    <Paper shadow="xs" p="xs" m="xs">
+                    <Paper shadow="xs" p="xs" m="xs" key={message.id}>
                         <Text size="xs">{message.name} on {message.date} </Text>
                         <Text size="md">{message.content}</Text>
                     </Paper>
