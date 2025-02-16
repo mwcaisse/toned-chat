@@ -1,6 +1,8 @@
 using System.Net.WebSockets;
+using System.Text;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Serilog;
+using TonedChat.Web.Services;
 
 namespace TonedChat.Web.Endpoints;
 
@@ -11,7 +13,7 @@ public static class ChatEndpoints
         app.Map("/chat/ws", ChatWebSocket);
     }
 
-    static async Task<Results<Ok, BadRequest>> ChatWebSocket(HttpContext context)
+    static async Task<Results<Ok, BadRequest>> ChatWebSocket(HttpContext context, ChatMessageCollection messageCollection)
     {
         if (!context.WebSockets.IsWebSocketRequest)
         {
@@ -20,6 +22,16 @@ public static class ChatEndpoints
 
         var buffer = new byte[1024 * 4];
         var ws = await context.WebSockets.AcceptWebSocketAsync();
+        
+        var lastMessage = -1;
+        
+        // let's send them all of the messages that happened before they connected
+        foreach (var message in messageCollection.GetMessageSinceLast(lastMessage))
+        {
+            await ws.SendAsync(Encoding.UTF8.GetBytes(message), WebSocketMessageType.Text, true,
+                CancellationToken.None);
+            lastMessage++;
+        }
         
         while (ws.State == WebSocketState.Open)
         {
@@ -54,8 +66,12 @@ public static class ChatEndpoints
             var message = System.Text.Encoding.UTF8.GetString(stringBytes);
             Log.Information("Received the following message from client: " + message);
             
+            //add the message to our collection
+            messageCollection.Add(message);
+            
             // now we are going to echo it back to them,
             await ws.SendAsync(stringBytes, WebSocketMessageType.Text, true, CancellationToken.None);
+            
         }
         
         Log.Information("Connection was closed :(");

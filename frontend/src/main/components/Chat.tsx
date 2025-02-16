@@ -26,8 +26,7 @@ function Chat() {
     // sign up for events from the WS
     useEffect(() => {
         const listener: ListenerDelegate = (messageData) => {
-            console.log("sad");
-            console.log(messageData)
+            console.dir(messages)
             const message = JSON.parse(messageData);
             setMessages([...messages, message])
         }
