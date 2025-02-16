@@ -1,5 +1,5 @@
 import {Box, TextInput, Text, ScrollArea, Paper, Button, Group, Flex, HoverCard} from "@mantine/core";
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import StringUtils from "@app/utils/StringUtils.ts";
 import {ChatService, ListenerDelegate} from "@app/services/ChatService.ts";
 import {KeyboardEvent} from "react";
@@ -13,6 +13,8 @@ function Chat() {
     const [name, setName] = useState("Mitchell");
     const [currentMessage, setCurrentMessage] = useState<string>("");
     const [messages, setMessages] = useState<Message[]>([]);
+    const scrollViewport = useRef<HTMLDivElement>(null);
+    const [scrolledToBottom, setScrolledToBottom] = useState<boolean>(true);
 
     const send = () => {
         chatService.send(name, currentMessage);
@@ -54,13 +56,32 @@ function Chat() {
         }
     });
 
+    // whenever messages changes, scroll to the bottom
+    useEffect(() => {
+        if (!scrollViewport.current) {
+            return;
+        }
+        const current = scrollViewport.current;
+
+        // this executes after messages has been changed, so this will never be true
+        if (scrolledToBottom) {
+            current.scrollTo({top: current.scrollHeight, behavior: "instant"});
+        }
+    }, [messages])
+
     const handleKeyPress = (event: KeyboardEvent<HTMLDivElement>) => {
         if (event.key === "Enter" && !StringUtils.isNullOrEmpty(currentMessage)) {
             event.preventDefault();
             event.stopPropagation();
             send();
         }
-    }
+    };
+
+    const handleScrolled = ({y} : {y : number}) => {
+        if (scrollViewport.current) {
+            setScrolledToBottom(scrollViewport.current.scrollTopMax - y < 5);
+        }
+    };
 
     return (
         <Flex direction="column" styles={{
@@ -81,12 +102,16 @@ function Chat() {
                     onKeyDown={handleKeyPress}
                 />
             </Box>
-            <ScrollArea styles={{
-                root: {
-                    flexGrow: 10,
-                    height: "calc(100vh - 220px)",
-                }
-            }}>
+            <ScrollArea
+                styles={{
+                    root: {
+                        flexGrow: 10,
+                        height: "calc(100vh - 220px)",
+                    }
+                }}
+                viewportRef={scrollViewport}
+                onScrollPositionChange={handleScrolled}
+            >
                 {messages.map((message) =>
                     <Paper shadow="xs" p="xs" m="xs" key={message.id}>
                         <Group>

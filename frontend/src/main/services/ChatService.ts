@@ -13,9 +13,7 @@ export class ChatService {
         this.listeners = [];
 
         this.ws.addEventListener("message", (event) => {
-            console.log("Message from server: ",  event.data);
-            // TODO: we should have this just send the JSON data back, but yolo
-            this.notify(event.data as string);
+            this.notify(event.data);
         })
     }
 
