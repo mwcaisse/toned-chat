@@ -1,11 +1,12 @@
 import {Box, TextInput, Text, ScrollArea, Paper, Button, Group, Flex} from "@mantine/core";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import StringUtils from "@app/utils/StringUtils.ts";
-import ChatService from "@app/services/ChatService.ts";
+import {ChatService, ListenerDelegate} from "@app/services/ChatService.ts";
 
 type Message = {
-    user: string;
-    message: string;
+    name: string;
+    content: string;
+    date: string
 }
 
 const chatService = new ChatService();
@@ -13,26 +14,27 @@ const chatService = new ChatService();
 function Chat() {
 
     const [currentMessage, setCurrentMessage] = useState<string>("");
-
-    const messages: Message[] = [
-        {
-            user: "Mitchell 2",
-            message: "Hello!"
-        },
-        {
-            user: "Mitchell",
-            message: "World!"
-        },
-        {
-            user: "Mitchell",
-            message: "This is life!!"
-        },
-    ];
+    const [messages, setMessages] = useState<Message[]>([]);
 
     const send = () => {
-        chatService.send(currentMessage);
+        chatService.send("Mitchell", currentMessage);
         setCurrentMessage("");
     }
+
+    // sign up for events from the WS
+    useEffect(() => {
+        const listener: ListenerDelegate = (messageData) => {
+            console.log("sad");
+            console.log(messageData)
+            const message = JSON.parse(messageData);
+            setMessages([...messages, message])
+        }
+
+        chatService.addListener(listener);
+        return () => {
+            chatService.removeListener(listener)
+        }
+    });
 
     return (
         <Flex direction="column" styles={{
@@ -47,8 +49,8 @@ function Chat() {
             }}>
                 {messages.map((message) =>
                     <Paper shadow="xs" p="xs" m="xs">
-                        <Text size="xs">{message.user}</Text>
-                        <Text size="md">{message.message}</Text>
+                        <Text size="xs">{message.name} on {message.date} </Text>
+                        <Text size="md">{message.content}</Text>
                     </Paper>
                 )}
             </ScrollArea>

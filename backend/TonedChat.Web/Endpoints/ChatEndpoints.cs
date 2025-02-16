@@ -53,6 +53,9 @@ public static class ChatEndpoints
 
             var message = System.Text.Encoding.UTF8.GetString(stringBytes);
             Log.Information("Received the following message from client: " + message);
+            
+            // now we are going to echo it back to them,
+            await ws.SendAsync(stringBytes, WebSocketMessageType.Text, true, CancellationToken.None);
         }
         
         Log.Information("Connection was closed :(");
