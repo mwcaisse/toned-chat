@@ -14,7 +14,7 @@ public static class ChatEndpoints
         app.MapGet("/chat/historical", GetHistoricalMessages);
     }
 
-    static async Task<Results<Ok, BadRequest>> ChatWebSocket(HttpContext context, ChatService chatService)
+    static async Task<IResult> ChatWebSocket(HttpContext context, ChatService chatService)
     {
         if (!context.WebSockets.IsWebSocketRequest)
         {
@@ -25,17 +25,16 @@ public static class ChatEndpoints
         await readTask();
         
         Log.Information("Connection was closed :(");
-        
-        // Do we return anything here though?
-        return TypedResults.Ok();
+
+        // there will already be a result when the WS is closed, so we don't need to do anything
+        return TypedResults.Empty;
     }
 
-    static async Task<IResult> GetHistoricalMessages(ChatHistoryService chatHistoryService)
+    static IResult GetHistoricalMessages(ChatHistoryService chatHistoryService)
     {
         var allMessages = chatHistoryService.GetHistoricalMessages().Select(Encoding.UTF8.GetString);
 
         var response = $"[{String.Join(",", allMessages)}]";
         return Results.Text(response, contentType: "application/json");
-
     }
 }
