@@ -2,6 +2,7 @@ import {Box, TextInput, Text, ScrollArea, Paper, Button, Group, Flex} from "@man
 import {useEffect, useState} from "react";
 import StringUtils from "@app/utils/StringUtils.ts";
 import {ChatService, ListenerDelegate} from "@app/services/ChatService.ts";
+import {KeyboardEvent} from "react";
 
 type Message = {
     name: string;
@@ -36,6 +37,14 @@ function Chat() {
         }
     });
 
+    const handleKeyPress = (event: KeyboardEvent<HTMLDivElement>) => {
+        if (event.key === "Enter" && !StringUtils.isNullOrEmpty(currentMessage)) {
+            event.preventDefault();
+            event.stopPropagation();
+            send();
+        }
+    }
+
     return (
         <Flex direction="column" styles={{
             root: {
@@ -44,7 +53,8 @@ function Chat() {
         }}>
             <ScrollArea styles={{
                 root: {
-                    flexGrow: 10
+                    flexGrow: 10,
+                    height: "calc(100vh - 200px)",
                 }
             }}>
                 {messages.map((message) =>
@@ -76,6 +86,7 @@ function Chat() {
                     )}
                     value={currentMessage}
                     onChange={(e) => setCurrentMessage(e.target.value)}
+                    onKeyDown={handleKeyPress}
                 />
             </Box>
         </Flex>
