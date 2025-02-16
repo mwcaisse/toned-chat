@@ -11,6 +11,7 @@ public static class ChatEndpoints
     public static void RegisterChatEndpoints(this WebApplication app)
     {
         app.Map("/chat/ws", ChatWebSocket);
+        app.MapGet("/chat/historical", GetHistoricalMessages);
     }
 
     static async Task<Results<Ok, BadRequest>> ChatWebSocket(HttpContext context, ChatService chatService)
@@ -27,5 +28,14 @@ public static class ChatEndpoints
         
         // Do we return anything here though?
         return TypedResults.Ok();
+    }
+
+    static async Task<IResult> GetHistoricalMessages(ChatHistoryService chatHistoryService)
+    {
+        var allMessages = chatHistoryService.GetHistoricalMessages().Select(Encoding.UTF8.GetString);
+
+        var response = $"[{String.Join(",", allMessages)}]";
+        return Results.Text(response, contentType: "application/json");
+
     }
 }

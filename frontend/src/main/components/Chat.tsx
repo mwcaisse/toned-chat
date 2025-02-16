@@ -3,12 +3,7 @@ import {useEffect, useState} from "react";
 import StringUtils from "@app/utils/StringUtils.ts";
 import {ChatService, ListenerDelegate} from "@app/services/ChatService.ts";
 import {KeyboardEvent} from "react";
-
-type Message = {
-    name: string;
-    content: string;
-    date: string
-}
+import {Message} from "@app/models/Chat.ts";
 
 const chatService = new ChatService();
 
@@ -22,6 +17,18 @@ function Chat() {
         chatService.send(name, currentMessage);
         setCurrentMessage("");
     }
+
+    // fetch any historical messages
+    useEffect(() => {
+        const fetch = async () => {
+            const historicalMessages = await chatService.getHistorical();
+            setMessages(historicalMessages)
+        };
+
+        fetch()
+            .catch(console.error);
+
+    }, []);
 
     // sign up for events from the WS
     useEffect(() => {

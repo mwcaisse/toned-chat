@@ -1,4 +1,6 @@
 import { DateTime } from "luxon";
+import {Message} from "@app/models/Chat.ts";
+import axios from "axios";
 
 export type ListenerDelegate = (e: string) => void;
 
@@ -41,5 +43,18 @@ export class ChatService {
         if (index > -1) {
             this.listeners.splice(index, 1)
         }
+    }
+
+    getHistorical(): Promise<Message[]> {
+        const url = "http://localhost:5136/chat/historical";
+
+        return axios.get(url).then(
+            res => res.data,
+            error => {
+                console.error("Error when trying to get historical messages", error);
+                throw error;
+            }
+        )
+
     }
 }

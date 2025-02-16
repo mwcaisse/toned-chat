@@ -12,8 +12,12 @@ public class ChatService
 
     private readonly Channel<byte[]> _messageChannel;
 
-    public ChatService()
+    private readonly ChatHistoryService _chatHistoryService;
+
+    public ChatService(ChatHistoryService chatHistoryService)
     {
+        _chatHistoryService = chatHistoryService;
+        
         _clients = new ConcurrentDictionary<string, WebSocket>();
         _messageChannel = Channel.CreateUnbounded<byte[]>(new UnboundedChannelOptions()
         {
@@ -100,6 +104,7 @@ public class ChatService
 
             while (reader.TryRead(out var message) && !cancellationToken.IsCancellationRequested)
             {
+                _chatHistoryService.AddMessage(message);
                 await DispatchMessage(message, cancellationToken);
             }
         }
