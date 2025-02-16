@@ -1,9 +1,10 @@
-import {Box, TextInput, Text, ScrollArea, Paper, Button, Group, Flex} from "@mantine/core";
+import {Box, TextInput, Text, ScrollArea, Paper, Button, Group, Flex, HoverCard} from "@mantine/core";
 import {useEffect, useState} from "react";
 import StringUtils from "@app/utils/StringUtils.ts";
 import {ChatService, ListenerDelegate} from "@app/services/ChatService.ts";
 import {KeyboardEvent} from "react";
 import {Message} from "@app/models/Chat.ts";
+import {DateTime} from "luxon";
 
 const chatService = new ChatService();
 
@@ -16,7 +17,17 @@ function Chat() {
     const send = () => {
         chatService.send(name, currentMessage);
         setCurrentMessage("");
-    }
+    };
+
+    const formatMessageDate = (d: string): string => {
+        const dt = DateTime.fromISO(d);
+        return dt.toLocaleString(DateTime.TIME_24_WITH_SECONDS);
+    };
+
+    const formatMessageDateFull = (d: string): string => {
+        const dt = DateTime.fromISO(d);
+        return `${dt.toLocaleString(DateTime.DATE_FULL)} at ${dt.toLocaleString(DateTime.TIME_24_WITH_SECONDS)}`;
+    };
 
     // fetch any historical messages
     useEffect(() => {
@@ -78,7 +89,18 @@ function Chat() {
             }}>
                 {messages.map((message) =>
                     <Paper shadow="xs" p="xs" m="xs" key={message.id}>
-                        <Text size="xs">{message.name} on {message.date} </Text>
+                        <Group>
+                            <Text fw="bold">{message.name}</Text>
+                            <HoverCard openDelay={500} withArrow position="top">
+                                <HoverCard.Target>
+                                    <Text>{formatMessageDate(message.date)}</Text>
+                                </HoverCard.Target>
+                                <HoverCard.Dropdown>
+                                    <Text>{formatMessageDateFull(message.date)}</Text>
+                                </HoverCard.Dropdown>
+                            </HoverCard>
+
+                        </Group>
                         <Text size="md">{message.content}</Text>
                     </Paper>
                 )}
