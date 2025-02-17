@@ -1,4 +1,17 @@
-import {Box, TextInput, Text, ScrollArea, Paper, Button, Group, Flex, HoverCard} from "@mantine/core";
+import {
+    Box,
+    TextInput,
+    Text,
+    ScrollArea,
+    Paper,
+    Button,
+    Group,
+    Flex,
+    HoverCard,
+    Center,
+    Affix,
+    Transition
+} from "@mantine/core";
 import {useEffect, useRef, useState} from "react";
 import StringUtils from "@app/utils/StringUtils.ts";
 import {ChatService, ListenerDelegate} from "@app/services/ChatService.ts";
@@ -30,6 +43,14 @@ function Chat() {
         const dt = DateTime.fromISO(d);
         return `${dt.toLocaleString(DateTime.DATE_FULL)} at ${dt.toLocaleString(DateTime.TIME_24_WITH_SECONDS)}`;
     };
+
+    const scrollToBottom = () => {
+        if (scrollViewport.current) {
+            console.dir(scrollViewport.current);
+            scrollViewport.current.scrollTo({top: scrollViewport.current.scrollHeight, behavior: "instant"});
+            setScrolledToBottom(true);
+        }
+    }
 
     // fetch any historical messages
     useEffect(() => {
@@ -85,78 +106,92 @@ function Chat() {
     };
 
     return (
-        <Flex direction="column" styles={{
-            root: {
-                minHeight: "calc(100vh - 100px)",
-            }
-        }}>
-            <Box>
-                <TextInput
-                    label="Who are you?"
+        <>
+            <Flex direction="column" styles={{
+                root: {
+                    minHeight: "calc(100vh - 100px)",
+                }
+            }}>
+                <Box>
+                    <TextInput
+                        label="Who are you?"
+                        styles={{
+                            wrapper: {
+                                flexGrow: 10
+                            }
+                        }}
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        onKeyDown={handleKeyPress}
+                    />
+                </Box>
+                <ScrollArea
                     styles={{
-                        wrapper: {
-                            flexGrow: 10
+                        root: {
+                            flexGrow: 10,
+                            height: "calc(100vh - 220px)",
                         }
                     }}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    onKeyDown={handleKeyPress}
-                />
-            </Box>
-            <ScrollArea
-                styles={{
-                    root: {
-                        flexGrow: 10,
-                        height: "calc(100vh - 220px)",
-                    }
-                }}
-                viewportRef={scrollViewport}
-                onScrollPositionChange={handleScrolled}
-            >
-                {messages.map((message) =>
-                    <Paper shadow="xs" p="xs" m="xs" key={message.id}>
-                        <Group>
-                            <Text fw="bold">{message.userName}</Text>
-                            <HoverCard openDelay={500} withArrow position="top">
-                                <HoverCard.Target>
-                                    <Text>{formatMessageDate(message.date)}</Text>
-                                </HoverCard.Target>
-                                <HoverCard.Dropdown>
-                                    <Text>{formatMessageDateFull(message.date)}</Text>
-                                </HoverCard.Dropdown>
-                            </HoverCard>
+                    viewportRef={scrollViewport}
+                    onScrollPositionChange={handleScrolled}
+                >
+                    {messages.map((message) =>
+                        <Paper shadow="xs" p="xs" m="xs" key={message.id}>
+                            <Group>
+                                <Text fw="bold">{message.userName}</Text>
+                                <HoverCard openDelay={500} withArrow position="top">
+                                    <HoverCard.Target>
+                                        <Text>{formatMessageDate(message.date)}</Text>
+                                    </HoverCard.Target>
+                                    <HoverCard.Dropdown>
+                                        <Text>{formatMessageDateFull(message.date)}</Text>
+                                    </HoverCard.Dropdown>
+                                </HoverCard>
 
-                        </Group>
-                        <Text size="md">{message.content}</Text>
-                    </Paper>
-                )}
-            </ScrollArea>
-
-            <Box>
-                <TextInput
-                    label="Chat"
-                    styles={{
-                        wrapper: {
-                            flexGrow: 10
-                        }
-                    }}
-                    inputContainer={(children) => (
-                        <Group>
-                            {children}
-                            <Button
-                                onClick={() => send()}
-                                disabled={StringUtils.isNullOrEmpty(currentMessage)}
-                            >
-                                Send
-                            </Button>
-                        </Group>
+                            </Group>
+                            <Text size="md">{message.content}</Text>
+                        </Paper>
                     )}
-                    value={currentMessage}
-                    onChange={(e) => setCurrentMessage(e.target.value)}
-                    onKeyDown={handleKeyPress}
-                />
-            </Box>
-        </Flex>
+                </ScrollArea>
+                <Box>
+                    <TextInput
+                        label="Chat"
+                        styles={{
+                            wrapper: {
+                                flexGrow: 10
+                            }
+                        }}
+                        inputContainer={(children) => (
+                            <Group>
+                                {children}
+                                <Button
+                                    onClick={() => send()}
+                                    disabled={StringUtils.isNullOrEmpty(currentMessage)}
+                                >
+                                    Send
+                                </Button>
+                            </Group>
+                        )}
+                        value={currentMessage}
+                        onChange={(e) => setCurrentMessage(e.target.value)}
+                        onKeyDown={handleKeyPress}
+                    />
+                </Box>
+            </Flex>
+            <Affix position={{ bottom: 80, right: 20}}>
+                <Transition mounted={!scrolledToBottom} transition="slide-up">
+                    {(transitionStyles) => (
+                        <Button
+                            onClick={() => scrollToBottom()}
+                            style={transitionStyles}
+                        >
+                            Scroll to Bottom
+                        </Button>
+                    )}
+                </Transition>
+            </Affix>
+        </>
+
 
     )
 }
