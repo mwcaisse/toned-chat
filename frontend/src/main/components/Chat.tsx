@@ -79,7 +79,8 @@ function Chat() {
 
     const handleScrolled = ({y} : {y : number}) => {
         if (scrollViewport.current) {
-            setScrolledToBottom(scrollViewport.current.scrollTopMax - y < 5);
+            const scrollTopMax = scrollViewport.current.scrollHeight - scrollViewport.current.clientHeight;
+            setScrolledToBottom(scrollTopMax - y < 5);
         }
     };
 
