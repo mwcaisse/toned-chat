@@ -92,8 +92,20 @@ function Chat() {
     // fetch any historical messages
     useEffect(() => {
         const fetch = async () => {
-            const historicalMessages = await chatService.getHistorical();
-            setMessages(historicalMessages)
+            try {
+                const historicalMessages = await chatService.getHistorical();
+                setMessages(historicalMessages)
+            }
+            catch (error: any) {
+                notifications.show({
+                    position: "top-right",
+                    autoClose: 3000,
+                    color: "red",
+                    icon: <IconX />,
+                    title: "Failed fetching messages",
+                    message: "Could not connect to the server",
+                })
+            }
         };
 
         fetch()
