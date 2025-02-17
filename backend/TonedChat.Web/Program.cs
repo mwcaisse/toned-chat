@@ -59,4 +59,8 @@ using (var scope = app.Services.CreateScope())
     await db.Database.MigrateAsync();
 }
 
+// Register the chat service to listen for application stop
+var chatService = app.Services.GetRequiredService<ChatService>();
+app.Lifetime.ApplicationStopping.Register(chatService.Stop);
+
 app.Run();

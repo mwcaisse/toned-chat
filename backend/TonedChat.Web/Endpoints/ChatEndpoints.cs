@@ -14,7 +14,7 @@ public static class ChatEndpoints
         app.MapGet("/chat/", GetMessages);
     }
 
-    static async Task<IResult> ChatWebSocket(HttpContext context, ChatService chatMessageService)
+    static async Task<IResult> ChatWebSocket(HttpContext context, ChatService chatMessageService, CancellationToken cancellationToken)
     {
         if (!context.WebSockets.IsWebSocketRequest)
         {
@@ -23,8 +23,6 @@ public static class ChatEndpoints
 
         var readTask = await chatMessageService.AddNewClient(context);
         await readTask();
-        
-        Log.Information("Connection was closed :(");
 
         // there will already be a result when the WS is closed, so we don't need to do anything
         return TypedResults.Empty;

@@ -13,14 +13,14 @@ public class ChatDispatchBackgroundService : BackgroundService
     
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await DoWork(stoppingToken);
+        await DoWork();
     }
 
-    private async Task DoWork(CancellationToken stoppingToken)
+    private async Task DoWork()
     {
         try
         {
-            await _chatMessageService.SendMessagesWork(stoppingToken);
+            await _chatMessageService.SendMessagesWork();
         }
         catch (Exception e)
         {
