@@ -7,10 +7,8 @@ import {
     Button,
     Group,
     Flex,
-    HoverCard,
-    Center,
     Affix,
-    Transition
+    Transition, HoverCard
 } from "@mantine/core";
 import {useEffect, useRef, useState} from "react";
 import StringUtils from "@app/utils/StringUtils.ts";
@@ -36,7 +34,31 @@ function Chat() {
 
     const formatMessageDate = (d: string): string => {
         const dt = DateTime.fromISO(d);
-        return dt.toLocaleString(DateTime.TIME_24_WITH_SECONDS);
+
+        const dtLocal = dt.toLocal().startOf("day");
+        const now = DateTime.now().startOf("day");
+        const dayDiff = now.diff(dtLocal, "days").days;
+
+        let dateDisplay = "";
+        if (dayDiff < 1) {
+            dateDisplay = "";
+        }
+        else if (dayDiff < 2) {
+            dateDisplay = "Yesterday";
+        }
+        else if (dayDiff < 7) {
+            dateDisplay = dtLocal.toFormat("EEEE");
+        }
+        else {
+            dateDisplay = dt.toLocaleString(DateTime.DATE_FULL);
+        }
+
+        const timeDisplay = dt.toLocaleString(DateTime.TIME_24_WITH_SECONDS);
+
+        if (StringUtils.isNullOrWhitespace(dateDisplay)) {
+            return timeDisplay;
+        }
+        return `${dateDisplay}, ${timeDisplay}`;
     };
 
     const formatMessageDateFull = (d: string): string => {

@@ -18,6 +18,18 @@ public class TautDatabaseContext : DbContext
 
     public override int SaveChanges()
     {
+        AddCreateUpdateDatesOnSave();
+        return base.SaveChanges();
+    }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        AddCreateUpdateDatesOnSave();
+        return base.SaveChangesAsync(cancellationToken);
+    }
+
+    private void AddCreateUpdateDatesOnSave()
+    {
         var now = _clock.GetCurrentInstant();
 
         foreach (var changedEntity in ChangeTracker.Entries())
@@ -37,7 +49,5 @@ public class TautDatabaseContext : DbContext
                 }
             }
         }
-
-        return base.SaveChanges();
     }
 }
