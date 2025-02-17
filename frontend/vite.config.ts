@@ -9,6 +9,7 @@ export default defineConfig({
         alias: {
             "@app": path.resolve(__dirname, "src/main/"),
             "@test": path.resolve(__dirname, "src/test/"),
+            '@tabler/icons-react': '@tabler/icons-react/dist/esm/icons/index.mjs',
         }
     }
 })

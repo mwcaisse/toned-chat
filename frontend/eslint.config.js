@@ -28,6 +28,7 @@ export default tseslint.config(
 
             "@stylistic/indent": ["error", 4],
             "@stylistic/quotes": ["error", "double"],
+            "@typescript-eslint/no-explicit-any": ["error", "never"],
         },
     },
 )

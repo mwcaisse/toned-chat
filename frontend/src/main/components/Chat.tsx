@@ -10,12 +10,14 @@ import {
     Affix,
     Transition, HoverCard
 } from "@mantine/core";
+import {IconX} from '@tabler/icons-react';
 import {useEffect, useRef, useState} from "react";
 import StringUtils from "@app/utils/StringUtils.ts";
 import {ChatService, ListenerDelegate} from "@app/services/ChatService.ts";
 import {KeyboardEvent} from "react";
 import {Message} from "@app/models/Chat.ts";
 import {DateTime} from "luxon";
+import {notifications} from "@mantine/notifications";
 
 const chatService = new ChatService();
 
@@ -28,8 +30,21 @@ function Chat() {
     const [scrolledToBottom, setScrolledToBottom] = useState<boolean>(true);
 
     const send = () => {
-        chatService.send(name, currentMessage);
-        setCurrentMessage("");
+        try {
+            chatService.send(name, currentMessage);
+            setCurrentMessage("");
+        }
+        catch (error: any) {
+            console.error("Could not send message", error);
+            notifications.show({
+                position: "top-right",
+                autoClose: 3000,
+                color: "red",
+                icon: <IconX />,
+                title: "Could not send message",
+                message: "Failed to send message: " + error.message,
+            })
+        }
     };
 
     const formatMessageDate = (d: string): string => {

@@ -18,6 +18,10 @@ export class ChatService {
     }
 
     send(name: string, messageText: string): void {
+        if (this.ws.readyState !== WebSocket.OPEN) {
+            throw new Error("No connection to the server.");
+        }
+
         const message = {
             userName: name,
             content: messageText,
