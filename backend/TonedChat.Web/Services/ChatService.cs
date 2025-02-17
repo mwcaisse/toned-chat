@@ -112,24 +112,31 @@ public class ChatService
         
         while (!cancellationToken.IsCancellationRequested)
         {
-            if (!await reader.WaitToReadAsync(cancellationToken))
+            try
             {
-                // if wait to ready async returns false, it means there will never be data to read from the channel
-                //  again (as it is closed) Nothing more to do here, eject
-                break;
-            }
+                if (!await reader.WaitToReadAsync(cancellationToken))
+                {
+                    // if wait to ready async returns false, it means there will never be data to read from the channel
+                    //  again (as it is closed) Nothing more to do here, eject
+                    break;
+                }
 
 
-            using var scope = _serviceProvider.CreateScope();
-            var chatMessageService = scope.ServiceProvider.GetRequiredService<ChatMessageService>();
-            while (reader.TryRead(out var message) && !cancellationToken.IsCancellationRequested)
-            {
-                // TODO: We should probably add the chat to the DB before we add to the channel?
-                var dbTask = chatMessageService.AddMessage(message);
+                using var scope = _serviceProvider.CreateScope();
+                var chatMessageService = scope.ServiceProvider.GetRequiredService<ChatMessageService>();
+                while (reader.TryRead(out var message) && !cancellationToken.IsCancellationRequested)
+                {
+                    // TODO: We should probably add the chat to the DB before we add to the channel?
+                    var dbTask = chatMessageService.AddMessage(message);
     
-                var messageString = TautSerializer.Serialize(message);
-                var dispatchTask = DispatchMessage(Encoding.UTF8.GetBytes(messageString), cancellationToken);
-                await Task.WhenAll(dbTask, dispatchTask);
+                    var messageString = TautSerializer.Serialize(message);
+                    var dispatchTask = DispatchMessage(Encoding.UTF8.GetBytes(messageString), cancellationToken);
+                    await Task.WhenAll(dbTask, dispatchTask);
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, "Failed when processing dispatched messages.");
             }
         }
     }

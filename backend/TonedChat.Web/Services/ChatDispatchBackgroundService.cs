@@ -1,3 +1,5 @@
+using Serilog;
+
 namespace TonedChat.Web.Services;
 
 public class ChatDispatchBackgroundService : BackgroundService
@@ -16,7 +18,13 @@ public class ChatDispatchBackgroundService : BackgroundService
 
     private async Task DoWork(CancellationToken stoppingToken)
     {
-        // TODO: Need some error hanlding here, so we don't crash the whole webserver if this breaks
-        await _chatMessageService.SendMessagesWork(stoppingToken);
+        try
+        {
+            await _chatMessageService.SendMessagesWork(stoppingToken);
+        }
+        catch (Exception e)
+        {
+            Log.Error(e, "Caught an unhandled exception in {className}. The service is dead now.", GetType().Name);
+        }
     }
 }
