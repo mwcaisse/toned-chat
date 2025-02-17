@@ -18,6 +18,7 @@ import {KeyboardEvent} from "react";
 import {Message} from "@app/models/Chat.ts";
 import {DateTime} from "luxon";
 import {notifications} from "@mantine/notifications";
+import NotificationService from "@app/utils/NotificationService.tsx"
 
 const chatService = new ChatService();
 
@@ -36,14 +37,10 @@ function Chat() {
         }
         catch (error: any) {
             console.error("Could not send message", error);
-            notifications.show({
-                position: "top-right",
-                autoClose: 3000,
-                color: "red",
-                icon: <IconX />,
+            NotificationService.showErrorMessage({
                 title: "Could not send message",
                 message: "Failed to send message: " + error.message,
-            })
+            });
         }
     };
 
@@ -97,14 +94,10 @@ function Chat() {
                 setMessages(historicalMessages)
             }
             catch (error: any) {
-                notifications.show({
-                    position: "top-right",
-                    autoClose: 3000,
-                    color: "red",
-                    icon: <IconX />,
+                NotificationService.showErrorMessage({
                     title: "Failed fetching messages",
                     message: "Could not connect to the server",
-                })
+                });
             }
         };
 
