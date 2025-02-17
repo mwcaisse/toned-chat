@@ -11,17 +11,17 @@ public static class ChatEndpoints
     public static void RegisterChatEndpoints(this WebApplication app)
     {
         app.Map("/chat/ws", ChatWebSocket);
-        app.MapGet("/chat/historical", GetHistoricalMessages);
+        app.MapGet("/chat/", GetMessages);
     }
 
-    static async Task<IResult> ChatWebSocket(HttpContext context, ChatService chatService)
+    static async Task<IResult> ChatWebSocket(HttpContext context, ChatService chatMessageService)
     {
         if (!context.WebSockets.IsWebSocketRequest)
         {
             return TypedResults.BadRequest();
         }
 
-        var readTask = await chatService.AddNewClient(context);
+        var readTask = await chatMessageService.AddNewClient(context);
         await readTask();
         
         Log.Information("Connection was closed :(");
@@ -30,9 +30,9 @@ public static class ChatEndpoints
         return TypedResults.Empty;
     }
 
-    static IResult GetHistoricalMessages(ChatHistoryService chatHistoryService)
+    static IResult GetMessages(ChatMessageService chatMessageService)
     {
-        var allMessages = chatHistoryService.GetHistoricalMessages();
+        var allMessages = chatMessageService.GetAll();
         return Results.Ok(allMessages);
     }
 }

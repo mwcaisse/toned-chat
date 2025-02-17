@@ -1,0 +1,8 @@
+root = true
+# details: https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/code-style-rule-options#example-editorconfig-file
+
+
+# C# files
+[*.cs]
+
+resharper_convert_to_primary_constructor_highlighting = none

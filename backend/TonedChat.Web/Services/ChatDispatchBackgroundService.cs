@@ -2,12 +2,11 @@ namespace TonedChat.Web.Services;
 
 public class ChatDispatchBackgroundService : BackgroundService
 {
-
-    private readonly ChatService _chatService;
+    private readonly ChatService _chatMessageService;
     
-    public ChatDispatchBackgroundService(ChatService chatService)
+    public ChatDispatchBackgroundService(ChatService chatMessageService)
     {
-        _chatService = chatService;
+        _chatMessageService = chatMessageService;
     }
     
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -17,6 +16,7 @@ public class ChatDispatchBackgroundService : BackgroundService
 
     private async Task DoWork(CancellationToken stoppingToken)
     {
-        await _chatService.SendMessagesWork(stoppingToken);
+        // TODO: Need some error hanlding here, so we don't crash the whole webserver if this breaks
+        await _chatMessageService.SendMessagesWork(stoppingToken);
     }
 }

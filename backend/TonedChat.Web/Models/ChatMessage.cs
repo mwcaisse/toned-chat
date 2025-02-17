@@ -1,12 +1,15 @@
+using NodaTime;
+
 namespace TonedChat.Web.Models;
 
 public class ChatMessage
-{
-    public string Id { get; set; }
+{   
+
+    public Guid Id { get; set; }
     
-    public string Name { get; set; }
+    public string UserName { get; set; }
     
     public string Content { get; set; }
     
-    public DateTime Date { get; set; }
+    public Instant Date { get; set; }
 }

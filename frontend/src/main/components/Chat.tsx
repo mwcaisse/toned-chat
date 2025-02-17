@@ -116,7 +116,7 @@ function Chat() {
                 {messages.map((message) =>
                     <Paper shadow="xs" p="xs" m="xs" key={message.id}>
                         <Group>
-                            <Text fw="bold">{message.name}</Text>
+                            <Text fw="bold">{message.userName}</Text>
                             <HoverCard openDelay={500} withArrow position="top">
                                 <HoverCard.Target>
                                     <Text>{formatMessageDate(message.date)}</Text>

@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Channels;
 using Serilog;
 using TonedChat.Web.Models;
@@ -16,11 +15,11 @@ public class ChatService
 
     private readonly Channel<ChatMessage> _messageChannel;
 
-    private readonly ChatHistoryService _chatHistoryService;
+    private IServiceProvider _serviceProvider;
 
-    public ChatService(ChatHistoryService chatHistoryService)
+    public ChatService(IServiceProvider serviceProvider)
     {
-        _chatHistoryService = chatHistoryService;
+        _serviceProvider = serviceProvider;
         
         _clients = new ConcurrentDictionary<string, WebSocket>();
         _messageChannel = Channel.CreateUnbounded<ChatMessage>(new UnboundedChannelOptions()
@@ -47,7 +46,7 @@ public class ChatService
 
     private async Task ProcessMessage(byte[] messageBytes)
     {
-        var messageString = System.Text.Encoding.UTF8.GetString(messageBytes);
+        var messageString = Encoding.UTF8.GetString(messageBytes);
         Log.Information("Received the following message from client: " + messageString);
 
         var message = TautSerializer.Deserialize<ChatMessage>(messageString);
@@ -55,9 +54,11 @@ public class ChatService
         {
             throw new Exception("Unable to process message, incorrect format");
         }
+        
+        // TODO: Perform some validation of this message
 
         // Set the ID of our message
-        message.Id = Guid.NewGuid().ToString();
+        message.Id = Guid.NewGuid();
         
         await _messageChannel.Writer.WriteAsync(message, CancellationToken.None);
     }
@@ -118,12 +119,17 @@ public class ChatService
                 break;
             }
 
+
+            using var scope = _serviceProvider.CreateScope();
+            var chatMessageService = scope.ServiceProvider.GetRequiredService<ChatMessageService>();
             while (reader.TryRead(out var message) && !cancellationToken.IsCancellationRequested)
             {
-                _chatHistoryService.AddMessage(message);
+                // TODO: We should probably add the chat to the DB before we add to the channel?
+                var dbTask = chatMessageService.AddMessage(message);
     
                 var messageString = TautSerializer.Serialize(message);
-                await DispatchMessage(Encoding.UTF8.GetBytes(messageString), cancellationToken);
+                var dispatchTask = DispatchMessage(Encoding.UTF8.GetBytes(messageString), cancellationToken);
+                await Task.WhenAll(dbTask, dispatchTask);
             }
         }
     }

@@ -19,9 +19,9 @@ export class ChatService {
 
     send(name: string, messageText: string): void {
         const message = {
-            name: name,
+            userName: name,
             content: messageText,
-            date: DateTime.now().toJSON()
+            date: DateTime.utc().toJSON()
         };
         this.ws.send(JSON.stringify(message));
     }
@@ -44,7 +44,7 @@ export class ChatService {
     }
 
     getHistorical(): Promise<Message[]> {
-        const url = "http://localhost:5136/chat/historical";
+        const url = "http://localhost:5136/chat/";
 
         return axios.get(url).then(
             res => res.data,
