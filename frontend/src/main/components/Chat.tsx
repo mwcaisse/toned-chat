@@ -10,14 +10,12 @@ import {
     Affix,
     Transition, HoverCard
 } from "@mantine/core";
-import {IconX} from '@tabler/icons-react';
 import {useEffect, useRef, useState} from "react";
 import StringUtils from "@app/utils/StringUtils.ts";
 import {ChatService, ListenerDelegate} from "@app/services/ChatService.ts";
 import {KeyboardEvent} from "react";
 import {Message} from "@app/models/Chat.ts";
 import {DateTime} from "luxon";
-import {notifications} from "@mantine/notifications";
 import NotificationService from "@app/utils/NotificationService.tsx"
 
 const chatService = new ChatService();
