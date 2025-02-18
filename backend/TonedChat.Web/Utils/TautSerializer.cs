@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Http.Json;
 using NodaTime;
 using NodaTime.Serialization.SystemTextJson;
@@ -20,6 +21,8 @@ public static class TautSerializer
     {
         options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
         options.SerializerOptions.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
+        options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseUpper));
+        options.SerializerOptions.AllowOutOfOrderMetadataProperties = true;
     }
     
     public static string Serialize<T>(T o)

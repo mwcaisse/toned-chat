@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TonedChat.Web", "TonedChat.Web\TonedChat.Web.csproj", "{EC7DABB4-8E56-4268-85C6-ACA5A55E7502}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TonedChat.Web.Test", "TonedChat.Web.Test\TonedChat.Web.Test.csproj", "{9A5A933E-5133-4D5F-921F-EF1029A1C268}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{EC7DABB4-8E56-4268-85C6-ACA5A55E7502}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EC7DABB4-8E56-4268-85C6-ACA5A55E7502}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EC7DABB4-8E56-4268-85C6-ACA5A55E7502}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9A5A933E-5133-4D5F-921F-EF1029A1C268}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A5A933E-5133-4D5F-921F-EF1029A1C268}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9A5A933E-5133-4D5F-921F-EF1029A1C268}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A5A933E-5133-4D5F-921F-EF1029A1C268}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

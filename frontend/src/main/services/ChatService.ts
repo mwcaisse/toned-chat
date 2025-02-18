@@ -2,7 +2,7 @@ import { DateTime } from "luxon";
 import {Message} from "@app/models/Chat.ts";
 import axios from "axios";
 
-export type ListenerDelegate = (e: string) => void;
+export type ListenerDelegate = (message: Message) => void;
 
 export class ChatService {
     ws: WebSocket;
@@ -23,16 +23,28 @@ export class ChatService {
         }
 
         const message = {
-            userName: name,
-            content: messageText,
-            date: DateTime.utc().toJSON()
+            id: crypto.randomUUID(),
+            type: "SEND_CHAT_MESSAGE",
+            payload:  {
+                userName: name,
+                content: messageText,
+                date: DateTime.utc().toJSON()
+            }
         };
         this.ws.send(JSON.stringify(message));
     }
 
-    notify(messageData: string): void {
-        for (const listener of this.listeners) {
-            listener(messageData);
+    notify(messageJson: string): void {
+        const message = JSON.parse(messageJson);
+
+        if (message.type === "RECEIVE_CHAT_MESSAGE") {
+            for (const listener of this.listeners) {
+                listener(message.payload);
+            }
+        }
+        else {
+            console.log(`Received a message of type ${message.type} but we aren't processing it now`);
+            console.dir(message)
         }
     }
 

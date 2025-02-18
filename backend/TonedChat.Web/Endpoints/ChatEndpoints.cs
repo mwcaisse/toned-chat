@@ -1,7 +1,3 @@
-using System.Net.WebSockets;
-using System.Text;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Serilog;
 using TonedChat.Web.Services;
 
 namespace TonedChat.Web.Endpoints;

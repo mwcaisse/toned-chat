@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading.Channels;
 using Serilog;
 using TonedChat.Web.Models;
+using TonedChat.Web.Models.Messaging;
 using TonedChat.Web.Utils;
 
 namespace TonedChat.Web.Services;
@@ -13,7 +14,7 @@ public class ChatService
 
     private readonly ConcurrentDictionary<string, WebSocket> _clients;
 
-    private readonly Channel<ChatMessage> _messageChannel;
+    private readonly Channel<Message> _messageChannel;
 
     private readonly IServiceProvider _serviceProvider;
 
@@ -24,7 +25,7 @@ public class ChatService
         _serviceProvider = serviceProvider;
         
         _clients = new ConcurrentDictionary<string, WebSocket>();
-        _messageChannel = Channel.CreateUnbounded<ChatMessage>(new UnboundedChannelOptions()
+        _messageChannel = Channel.CreateUnbounded<Message>(new UnboundedChannelOptions()
         {
             SingleReader = true,
             SingleWriter = false,
@@ -53,18 +54,34 @@ public class ChatService
         var messageString = Encoding.UTF8.GetString(messageBytes);
         Log.Information("Received the following message from client: " + messageString);
 
-        var message = TautSerializer.Deserialize<ChatMessage>(messageString);
+        var message = TautSerializer.Deserialize<Message>(messageString);
         if (message == null)
         {
             throw new Exception("Unable to process message, incorrect format");
         }
-        
-        // TODO: Perform some validation of this message
 
-        // Set the ID of our message
-        message.Id = Guid.NewGuid();
-        
-        await _messageChannel.Writer.WriteAsync(message, cancellationToken);
+        switch (message)
+        {
+            case CreateChannelMessage createChannel:
+                Log.Information("Received a message to create channel {channelName} but we aren't going to do that yet", createChannel.Payload.Name);
+                break;
+            case SendChatMessage sendChat:
+                // TODO: We should create the message in the database here, then send it to our dispatch service,
+                //  but lets just keep this the same for now
+                var payload = sendChat.Payload;
+                payload.Id = Guid.NewGuid();
+
+                var notifyMessage = new ReceiveChatMessage()
+                {
+                    Id = Guid.NewGuid(),
+                    Payload = payload
+                };
+                await _messageChannel.Writer.WriteAsync(notifyMessage, cancellationToken);
+                break;
+            default:
+                Log.Information("Unexpected message type!");
+                break;
+        }
     }
 
     private Func<Task> CreateClientReadThread(string connectionId, WebSocket ws)
@@ -151,8 +168,11 @@ public class ChatService
                 var chatMessageService = scope.ServiceProvider.GetRequiredService<ChatMessageService>();
                 while (reader.TryRead(out var message) && !cancellationToken.IsCancellationRequested)
                 {
+                    // TODO: We are only sending down these message types right now, so it is fine
+                    var receiveMessage = message as ReceiveChatMessage;
+                    
                     // TODO: We should probably add the chat to the DB before we add to the channel?
-                    var dbTask = chatMessageService.AddMessage(message);
+                    var dbTask = chatMessageService.AddMessage(receiveMessage!.Payload);
     
                     var messageString = TautSerializer.Serialize(message);
                     var dispatchTask = DispatchMessage(Encoding.UTF8.GetBytes(messageString), cancellationToken);
