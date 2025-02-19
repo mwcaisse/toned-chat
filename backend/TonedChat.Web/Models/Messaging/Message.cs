@@ -9,6 +9,10 @@ namespace TonedChat.Web.Models.Messaging;
 [JsonDerivedType(typeof(SendChatMessage), typeDiscriminator: SendChatMessage.TYPE)]
 public abstract class Message
 {
+    protected Message()
+    {
+        Id = Guid.NewGuid();
+    }
     public Guid Id { get; init; }
 
     public abstract string Type { get; }
