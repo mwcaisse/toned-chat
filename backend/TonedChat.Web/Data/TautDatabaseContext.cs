@@ -8,6 +8,8 @@ namespace TonedChat.Web.Data;
 public class TautDatabaseContext : DbContext
 {
     public DbSet<ChatMessageEntity> ChatMessages { get; set; }
+    
+    public DbSet<ChannelEntity> Channels { get; set; }
 
     private readonly IClock _clock;
 

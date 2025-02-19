@@ -5,10 +5,10 @@ using TonedChat.Web.Data.EntityInterfaces;
 
 namespace TonedChat.Web.Data.Entities;
 
-[Table("chat_message")]
-public class ChatMessageEntity : ITrackedEntity
+[Table("channel")]
+public class ChannelEntity : ITrackedEntity
 {
-    public ChatMessageEntity()
+    public ChannelEntity()
     {
         Id = Guid.NewGuid();
     }
@@ -17,18 +17,9 @@ public class ChatMessageEntity : ITrackedEntity
     public Guid Id { get; set; }
     
     [StringLength(100)]
-    public string UserName { get; set; }
+    public string Name { get; set; }
     
-    public string Content { get; set; }
-    
-    [ForeignKey("Channel")]
-    public Guid ChannelId { get; set; }
-    
-    public Instant Date { get; set; }
-
     public Instant CreateDate { get; set; }
     
     public Instant UpdateDate { get; set; }
-    
-    public virtual ChannelEntity Channel { get; set; }
 }

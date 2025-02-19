@@ -2,13 +2,13 @@ using Serilog;
 
 namespace TonedChat.Web.Services;
 
-public class ChatDispatchBackgroundService : BackgroundService
+public class MessageDispatchBackgroundService : BackgroundService
 {
-    private readonly ChatService _chatMessageService;
+    private readonly MessageService _messageService;
     
-    public ChatDispatchBackgroundService(ChatService chatMessageService)
+    public MessageDispatchBackgroundService(MessageService messageService)
     {
-        _chatMessageService = chatMessageService;
+        _messageService = messageService;
     }
     
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -20,7 +20,7 @@ public class ChatDispatchBackgroundService : BackgroundService
     {
         try
         {
-            await _chatMessageService.SendMessagesWork();
+            await _messageService.SendMessagesWork();
         }
         catch (Exception e)
         {

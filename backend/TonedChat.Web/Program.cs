@@ -32,8 +32,10 @@ builder.Services.AddDbContext<TautDatabaseContext>(options =>
 });
 
 builder.Services.AddScoped<ChatMessageService>();
-builder.Services.AddSingleton<ChatService>();
-builder.Services.AddHostedService<ChatDispatchBackgroundService>();
+builder.Services.AddScoped<ChatChannelService>();
+
+builder.Services.AddSingleton<MessageService>();
+builder.Services.AddHostedService<MessageDispatchBackgroundService>();
 
 builder.Services.AddCors(options =>
 {
@@ -60,7 +62,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Register the chat service to listen for application stop
-var chatService = app.Services.GetRequiredService<ChatService>();
+var chatService = app.Services.GetRequiredService<MessageService>();
 app.Lifetime.ApplicationStopping.Register(chatService.Stop);
 
 app.Run();

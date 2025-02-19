@@ -16,16 +16,18 @@ public class ChatMessageService
 
     public List<ChatMessage> GetAll()
     {
-        return _db.ChatMessages.OrderBy(x => x.Date).Select(m => new ChatMessage()
-        {
-            Id = m.Id,
-            Content = m.Content,
-            Date = m.Date,
-            UserName = m.UserName,
-        }).ToList();
+        return _db.ChatMessages.OrderBy(x => x.Date).Select(ToViewModel).ToList();
     }
 
-    public async Task AddMessage(ChatMessage message)
+    public List<ChatMessage> GetAllForChannel(Guid channelId)
+    {
+        return _db.ChatMessages.Where(m => m.ChannelId == channelId)
+            .OrderBy(m => m.Date)
+            .Select(ToViewModel)
+            .ToList();
+    }
+
+    public async Task<ChatMessage> AddMessage(ChatMessage message)
     {
         var m = new ChatMessageEntity()
         {
@@ -35,5 +37,17 @@ public class ChatMessageService
         };
         _db.ChatMessages.Add(m);
         await _db.SaveChangesAsync();
+        return ToViewModel(m);
+    }
+
+    private static ChatMessage ToViewModel(ChatMessageEntity e)
+    {
+        return new ChatMessage()
+        {
+            Id = e.Id,
+            Content = e.Content,
+            Date = e.Date,
+            UserName = e.UserName,
+        };
     }
 }

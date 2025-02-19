@@ -8,16 +8,18 @@ public static class ChatEndpoints
     {
         app.Map("/chat/ws", ChatWebSocket);
         app.MapGet("/chat/", GetMessages);
+        app.MapGet("/channel/", GetChannels);
+        app.Map("/channel/{channelId}/messages", GetMessagesForChannel);
     }
 
-    static async Task<IResult> ChatWebSocket(HttpContext context, ChatService chatMessageService, CancellationToken cancellationToken)
+    static async Task<IResult> ChatWebSocket(HttpContext context, MessageService messageService, CancellationToken cancellationToken)
     {
         if (!context.WebSockets.IsWebSocketRequest)
         {
             return TypedResults.BadRequest();
         }
 
-        var readTask = await chatMessageService.AddNewClient(context);
+        var readTask = await messageService.AddNewClient(context);
         await readTask();
 
         // there will already be a result when the WS is closed, so we don't need to do anything
@@ -28,5 +30,17 @@ public static class ChatEndpoints
     {
         var allMessages = chatMessageService.GetAll();
         return Results.Ok(allMessages);
+    }
+
+    static IResult GetChannels(ChatChannelService chatChannelService)
+    {
+        var allChannels = chatChannelService.GetAll();
+        return Results.Ok(allChannels);
+    }
+
+    static IResult GetMessagesForChannel(Guid channelId, ChatMessageService chatMessageService)
+    {
+        var messagesForChannel = chatMessageService.GetAllForChannel(channelId);
+        return Results.Ok(messagesForChannel);
     }
 }
