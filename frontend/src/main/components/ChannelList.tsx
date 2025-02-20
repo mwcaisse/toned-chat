@@ -86,8 +86,6 @@ export default function ChannelList(
         setCreateNewChannelModalOpened(true);
     };
 
-
-
     return (
         <>
             <NavLink

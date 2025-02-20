@@ -144,6 +144,10 @@ function Chat({activeChannelId}: ChatProps) {
         }
     }, [messages])
 
+    useEffect(() => {
+        setCurrentMessage("")
+    }, [activeChannelId]);
+
     const handleKeyPress = (event: KeyboardEvent<HTMLDivElement>) => {
         if (event.key === "Enter" && !StringUtils.isNullOrEmpty(currentMessage)) {
             event.preventDefault();
