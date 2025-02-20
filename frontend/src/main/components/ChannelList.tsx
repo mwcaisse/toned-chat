@@ -3,6 +3,8 @@ import {NavLink} from "@mantine/core";
 import {useContext, useEffect, useState} from "react";
 import {ChatContext} from "@app/context/ChatContext.ts";
 import NotificationService from "@app/utils/NotificationService.tsx";
+import {IconPlus} from "@tabler/icons-react";
+import CreateNewChannelModal from "@app/components/CreateNewChannelModal.tsx";
 
 type ChannelListProps = {
     activeChannelId: string | null;
@@ -14,6 +16,7 @@ export default function ChannelList(
 ) {
     const {chatService} = useContext(ChatContext);
     const [channels, setChannels] = useState<Channel[]>([]);
+    const [createNewChannelModalOpened, setCreateNewChannelModalOpened] = useState(false);
 
     useEffect(() => {
         const fetch = async () => {
@@ -41,10 +44,19 @@ export default function ChannelList(
 
     const clickChannelLink = (channel: Channel) => {
         setActiveChannelId(channel.id);
-    }
+    };
+
+    const clickCreateNewChannel = () => {
+        setCreateNewChannelModalOpened(true);
+    };
 
     return (
         <>
+            <NavLink
+                label={"Create Channel"}
+                leftSection={<IconPlus />}
+                onClick={clickCreateNewChannel}
+            />
             {channels.map((channel: Channel) => (
                 <NavLink
                     key={channel.id}
@@ -53,6 +65,11 @@ export default function ChannelList(
                     onClick={() => clickChannelLink(channel)}
                 />
             ))}
+
+            <CreateNewChannelModal
+                opened={createNewChannelModalOpened}
+                close={() => setCreateNewChannelModalOpened(false)}
+            />
         </>
     );
 }

@@ -20,6 +20,14 @@ public class ChatChannelService
     
     public async Task<ChatChannel> Create(ChatChannel channel)
     {
+        // if a channel with this name already exists, don't create it
+        // TODO: We should disallow re-creating the same channel with different case
+        var existingChannel = _db.Channels.FirstOrDefault(c => c.Name == channel.Name);
+        if (existingChannel != null)
+        {
+            return ToViewModel(existingChannel);
+        }
+        
         var e = new ChannelEntity()
         {
             Name = channel.Name,

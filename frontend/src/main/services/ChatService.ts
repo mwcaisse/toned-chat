@@ -83,4 +83,20 @@ export class ChatService {
             }
         )
     }
+
+    createChannel(name: string): void {
+        if (this.ws.readyState !== WebSocket.OPEN) {
+            throw new Error("No connection to the server.");
+        }
+
+        // TODO: Need to add a type enum for messages
+        const message = {
+            id: crypto.randomUUID(),
+            type: "CREATE_CHANNEL",
+            payload:  {
+                name
+            }
+        };
+        this.ws.send(JSON.stringify(message));
+    }
 }
