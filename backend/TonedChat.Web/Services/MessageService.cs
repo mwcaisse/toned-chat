@@ -83,6 +83,12 @@ public class MessageService
                 };
                 await _messageChannel.Writer.WriteAsync(notifyMessage, cancellationToken);
                 break;
+            case StartedTypingMessage startedTyping:
+                await _messageChannel.Writer.WriteAsync(startedTyping, cancellationToken);
+                break;
+            case StoppedTypingMessage stoppedTyping:
+                await _messageChannel.Writer.WriteAsync(stoppedTyping, cancellationToken);
+                break;
             default:
                 Log.Information("Unexpected message type!");
                 break;

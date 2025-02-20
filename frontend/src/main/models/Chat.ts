@@ -10,3 +10,8 @@ export type Channel = {
     id: string;
     name: string;
 }
+
+export type TypingIndicator = {
+    channelId: string;
+    user: string
+}

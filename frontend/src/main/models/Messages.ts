@@ -3,6 +3,8 @@ export enum MessageTypes {
     ReceiveChatMessage = "RECEIVE_CHAT_MESSAGE",
     CreateChannel = "CREATE_CHANNEL",
     ChannelCreated = "CHANNEL_CREATED",
+    StartedTyping = "STARTED_TYPING",
+    StoppedTyping = "STOPPED_TYPING",
 }
 
 export type Message = {

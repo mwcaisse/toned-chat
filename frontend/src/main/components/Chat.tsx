@@ -14,7 +14,7 @@ import {useContext, useEffect, useRef, useState} from "react";
 import StringUtils from "@app/utils/StringUtils.ts";
 import {MessageListener} from "@app/services/ChatService.ts";
 import {KeyboardEvent} from "react";
-import {ChatMessage} from "@app/models/Chat.ts";
+import {ChatMessage, TypingIndicator} from "@app/models/Chat.ts";
 import {DateTime} from "luxon";
 import NotificationService from "@app/utils/NotificationService.tsx"
 import {ChatContext} from "@app/context/ChatContext.ts";
@@ -30,6 +30,9 @@ function Chat({activeChannelId}: ChatProps) {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const scrollViewport = useRef<HTMLDivElement>(null);
     const [scrolledToBottom, setScrolledToBottom] = useState<boolean>(true);
+    const [currentlyTypingUsers, setCurrentlyTypingUsers] = useState<Set<string>>(new Set([]));
+    const [chatHasFocus, setChatHasFocus] = useState<boolean>(false);
+    const [isTyping, setIsTyping] = useState<boolean>(false);
 
     const {chatService} = useContext(ChatContext);
 
@@ -89,6 +92,30 @@ function Chat({activeChannelId}: ChatProps) {
         }
     }
 
+    useEffect(() => {
+        if (activeChannelId === null) {
+            return;
+        }
+        try {
+            if (isTyping) {
+                chatService.startTyping(activeChannelId, name)
+            }
+            else {
+                chatService.stopTyping(activeChannelId, name)
+            }
+        }
+        catch (error) {
+            console.error("Could not send typing indicator: " + error);
+        }
+
+    }, [isTyping]);
+
+    useEffect(() => {
+        if (chatHasFocus) {
+            setIsTyping(!StringUtils.isNullOrEmpty(currentMessage));
+        }
+    },[currentMessage]);
+
     // fetch any historical messages
     useEffect(() => {
         if (activeChannelId === null) {
@@ -116,11 +143,27 @@ function Chat({activeChannelId}: ChatProps) {
     // sign up for events from the WS
     useEffect(() => {
         const listener: MessageListener = {
-            messageTypes: new Set([MessageTypes.ReceiveChatMessage]),
+            messageTypes: new Set([MessageTypes.ReceiveChatMessage, MessageTypes.StartedTyping, MessageTypes.StoppedTyping]),
             onMessage:(message) => {
-                const chatMessage = (message as MessageWithPayload<ChatMessage>).payload;
-                if (chatMessage.channelId === activeChannelId) {
-                    setMessages([...messages, chatMessage])
+                if (message.type === MessageTypes.ReceiveChatMessage) {
+                    const chatMessage = (message as MessageWithPayload<ChatMessage>).payload;
+                    if (chatMessage.channelId === activeChannelId) {
+                        setMessages([...messages, chatMessage])
+                    }
+                }
+                else if (message.type === MessageTypes.StartedTyping) {
+                    const typingIndicator = (message as MessageWithPayload<TypingIndicator>).payload;
+                    if (typingIndicator.channelId === activeChannelId) {
+                        setCurrentlyTypingUsers(new Set([...currentlyTypingUsers, typingIndicator.user]));
+                    }
+                }
+                else if (message.type === MessageTypes.StoppedTyping) {
+                    const typingIndicator = (message as MessageWithPayload<TypingIndicator>).payload;
+                    if (typingIndicator.channelId === activeChannelId) {
+                        const newSet = new Set(currentlyTypingUsers);
+                        newSet.delete(typingIndicator.user);
+                        setCurrentlyTypingUsers(newSet);
+                    }
                 }
             }
         };
@@ -146,6 +189,7 @@ function Chat({activeChannelId}: ChatProps) {
 
     useEffect(() => {
         setCurrentMessage("")
+        setCurrentlyTypingUsers(new Set([]));
     }, [activeChannelId]);
 
     const handleKeyPress = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -193,7 +237,7 @@ function Chat({activeChannelId}: ChatProps) {
                     styles={{
                         root: {
                             flexGrow: 10,
-                            height: "calc(100vh - 220px)",
+                            height: "calc(100vh - 240px)",
                         }
                     }}
                     viewportRef={scrollViewport}
@@ -217,6 +261,9 @@ function Chat({activeChannelId}: ChatProps) {
                         </Paper>
                     )}
                 </ScrollArea>
+                {currentlyTypingUsers.size > 0 && (
+                    <Text>{Array.from(currentlyTypingUsers.values()).join(" ,")} is currently typing...</Text>
+                )}
                 <Box>
                     <TextInput
                         label="Chat"
@@ -239,6 +286,16 @@ function Chat({activeChannelId}: ChatProps) {
                         value={currentMessage}
                         onChange={(e) => setCurrentMessage(e.target.value)}
                         onKeyDown={handleKeyPress}
+                        onFocus={() => {
+                            setChatHasFocus(true);
+                            if (!StringUtils.isNullOrEmpty(currentMessage)) {
+                                setIsTyping(true);
+                            }
+                        }}
+                        onBlur={() => {
+                            setChatHasFocus(false);
+                            setIsTyping(false);
+                        }}
                     />
                 </Box>
             </Flex>

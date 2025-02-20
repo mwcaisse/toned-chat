@@ -100,4 +100,36 @@ export class ChatService {
         };
         this.ws.send(JSON.stringify(message));
     }
+
+    startTyping(channelId: string, name: string) {
+        if (this.ws.readyState !== WebSocket.OPEN) {
+            throw new Error("No connection to the server.");
+        }
+
+        const message = {
+            id: crypto.randomUUID(),
+            type: MessageTypes.StartedTyping,
+            payload:  {
+                channelId,
+                user: name,
+            }
+        };
+        this.ws.send(JSON.stringify(message));
+    }
+
+    stopTyping(channelId: string, name: string) {
+        if (this.ws.readyState !== WebSocket.OPEN) {
+            throw new Error("No connection to the server.");
+        }
+
+        const message = {
+            id: crypto.randomUUID(),
+            type: MessageTypes.StoppedTyping,
+            payload:  {
+                channelId,
+                user: name,
+            }
+        };
+        this.ws.send(JSON.stringify(message));
+    }
 }

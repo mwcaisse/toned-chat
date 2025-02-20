@@ -7,6 +7,8 @@ namespace TonedChat.Web.Models.Messaging;
 [JsonDerivedType(typeof(CreateChannelMessage), typeDiscriminator: CreateChannelMessage.TYPE)]
 [JsonDerivedType(typeof(ReceiveChatMessage), typeDiscriminator: ReceiveChatMessage.TYPE)]
 [JsonDerivedType(typeof(SendChatMessage), typeDiscriminator: SendChatMessage.TYPE)]
+[JsonDerivedType(typeof(StartedTypingMessage), typeDiscriminator: StartedTypingMessage.TYPE)]
+[JsonDerivedType(typeof(StoppedTypingMessage), typeDiscriminator: StoppedTypingMessage.TYPE)]
 public abstract class Message
 {
     protected Message()
