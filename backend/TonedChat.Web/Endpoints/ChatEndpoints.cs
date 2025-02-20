@@ -7,7 +7,6 @@ public static class ChatEndpoints
     public static void RegisterChatEndpoints(this WebApplication app)
     {
         app.Map("/chat/ws", ChatWebSocket);
-        app.MapGet("/chat/", GetMessages);
         app.MapGet("/channel/", GetChannels);
         app.Map("/channel/{channelId}/messages", GetMessagesForChannel);
     }
@@ -25,13 +24,7 @@ public static class ChatEndpoints
         // there will already be a result when the WS is closed, so we don't need to do anything
         return TypedResults.Empty;
     }
-
-    static IResult GetMessages(ChatMessageService chatMessageService)
-    {
-        var allMessages = chatMessageService.GetAll();
-        return Results.Ok(allMessages);
-    }
-
+    
     static IResult GetChannels(ChatChannelService chatChannelService)
     {
         var allChannels = chatChannelService.GetAll();

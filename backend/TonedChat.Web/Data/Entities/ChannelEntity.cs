@@ -10,11 +10,11 @@ public class ChannelEntity : ITrackedEntity
 {
     public ChannelEntity()
     {
-        Id = Guid.NewGuid();
+        Id = Guid.NewGuid().ToString();
     }
     
     [Key]
-    public Guid Id { get; set; }
+    public string Id { get; set; }
     
     [StringLength(100)]
     public string Name { get; set; }

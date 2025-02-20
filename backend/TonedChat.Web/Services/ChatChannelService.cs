@@ -33,7 +33,7 @@ public class ChatChannelService
     {
         return new ChatChannel()
         {
-            Id = e.Id,
+            Id = Guid.Parse(e.Id),
             Name = e.Name
         };
     }

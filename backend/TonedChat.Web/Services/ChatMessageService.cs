@@ -21,7 +21,7 @@ public class ChatMessageService
 
     public List<ChatMessage> GetAllForChannel(Guid channelId)
     {
-        return _db.ChatMessages.Where(m => m.ChannelId == channelId)
+        return _db.ChatMessages.Where(m => m.ChannelId == channelId.ToString())
             .OrderBy(m => m.Date)
             .Select(ToViewModel)
             .ToList();
@@ -29,16 +29,16 @@ public class ChatMessageService
 
     public async Task<ChatMessage> AddMessage(ChatMessage message)
     {
-        // TODO: do I really want to make two databae queries to validate a message before we send it?
+        // TODO: do I really want to make two database queries to validate a message before we send it?
         // ideally we can optimize this / send it without making a database query each time
-        if (!_db.Channels.Any(c => c.Id == message.ChannelId))
+        if (!_db.Channels.Any(c => c.Id == message.ChannelId.ToString()))
         {
             throw new Exception($"Channel with id {message.ChannelId} does not exist!");
         }
         
         var m = new ChatMessageEntity()
         {
-            ChannelId = message.ChannelId,
+            ChannelId = message.ChannelId.ToString(),
             Content = message.Content,
             Date = message.Date,
             UserName = message.UserName,
@@ -52,8 +52,8 @@ public class ChatMessageService
     {
         return new ChatMessage()
         {
-            Id = e.Id,
-            ChannelId = e.ChannelId,
+            Id = Guid.Parse(e.Id),
+            ChannelId = Guid.Parse(e.ChannelId),
             Content = e.Content,
             Date = e.Date,
             UserName = e.UserName,

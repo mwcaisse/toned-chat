@@ -1,5 +1,5 @@
 import { DateTime } from "luxon";
-import {Message} from "@app/models/Chat.ts";
+import {Channel, Message} from "@app/models/Chat.ts";
 import axios from "axios";
 
 export type ListenerDelegate = (message: Message) => void;
@@ -17,7 +17,7 @@ export class ChatService {
         })
     }
 
-    send(name: string, messageText: string): void {
+    send(channelId: string, name: string, messageText: string): void {
         if (this.ws.readyState !== WebSocket.OPEN) {
             throw new Error("No connection to the server.");
         }
@@ -26,6 +26,7 @@ export class ChatService {
             id: crypto.randomUUID(),
             type: "SEND_CHAT_MESSAGE",
             payload:  {
+                channelId: channelId,
                 userName: name,
                 content: messageText,
                 date: DateTime.utc().toJSON()
@@ -59,8 +60,8 @@ export class ChatService {
         }
     }
 
-    getHistorical(): Promise<Message[]> {
-        const url = "http://localhost:5136/chat/";
+    getHistoricalForChannel(channelId: string): Promise<Message[]> {
+        const url = `http://localhost:5136/channel/${channelId}/messages`;
 
         return axios.get(url).then(
             res => res.data,
@@ -69,6 +70,17 @@ export class ChatService {
                 throw error;
             }
         )
+    }
 
+    getChannels(): Promise<Channel[]> {
+        const url = "http://localhost:5136/channel/";
+
+        return axios.get(url).then(
+            res => res.data,
+            error => {
+                console.error("Error when trying to get all channels", error);
+                throw error;
+            }
+        )
     }
 }

@@ -10,11 +10,11 @@ public class ChatMessageEntity : ITrackedEntity
 {
     public ChatMessageEntity()
     {
-        Id = Guid.NewGuid();
+        Id = Guid.NewGuid().ToString();
     }
     
     [Key]
-    public Guid Id { get; set; }
+    public string Id { get; set; }
     
     [StringLength(100)]
     public string UserName { get; set; }
@@ -22,7 +22,7 @@ public class ChatMessageEntity : ITrackedEntity
     public string Content { get; set; }
     
     [ForeignKey("Channel")]
-    public Guid ChannelId { get; set; }
+    public string ChannelId { get; set; }
     
     public Instant Date { get; set; }
 

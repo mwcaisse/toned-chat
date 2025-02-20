@@ -10,27 +10,31 @@ import {
     Affix,
     Transition, HoverCard
 } from "@mantine/core";
-import {useEffect, useRef, useState} from "react";
+import {useContext, useEffect, useRef, useState} from "react";
 import StringUtils from "@app/utils/StringUtils.ts";
-import {ChatService, ListenerDelegate} from "@app/services/ChatService.ts";
+import {ListenerDelegate} from "@app/services/ChatService.ts";
 import {KeyboardEvent} from "react";
 import {Message} from "@app/models/Chat.ts";
 import {DateTime} from "luxon";
 import NotificationService from "@app/utils/NotificationService.tsx"
+import {ChatContext} from "@app/context/ChatContext.ts";
 
-const chatService = new ChatService();
+type ChatProps = {
+    activeChannelId: string | null;
+}
 
-function Chat() {
-
+function Chat({activeChannelId}: ChatProps) {
     const [name, setName] = useState("Mitchell");
     const [currentMessage, setCurrentMessage] = useState<string>("");
     const [messages, setMessages] = useState<Message[]>([]);
     const scrollViewport = useRef<HTMLDivElement>(null);
     const [scrolledToBottom, setScrolledToBottom] = useState<boolean>(true);
 
+    const {chatService} = useContext(ChatContext);
+
     const send = () => {
         try {
-            chatService.send(name, currentMessage);
+            chatService.send(activeChannelId!, name, currentMessage);
             setCurrentMessage("");
         }
         catch (error: any) {
@@ -86,9 +90,13 @@ function Chat() {
 
     // fetch any historical messages
     useEffect(() => {
+        if (activeChannelId === null) {
+            setMessages([]);
+            return;
+        }
         const fetch = async () => {
             try {
-                const historicalMessages = await chatService.getHistorical();
+                const historicalMessages = await chatService.getHistoricalForChannel(activeChannelId);
                 setMessages(historicalMessages)
             }
             catch (error: any) {
@@ -102,7 +110,7 @@ function Chat() {
         fetch()
             .catch(console.error);
 
-    }, []);
+    }, [activeChannelId]);
 
     // sign up for events from the WS
     useEffect(() => {
@@ -143,6 +151,12 @@ function Chat() {
             setScrolledToBottom(scrollTopMax - y < 5);
         }
     };
+
+    if (activeChannelId === null) {
+        return (
+            <Text>Please select a channel!</Text>
+        );
+    }
 
     return (
         <>
