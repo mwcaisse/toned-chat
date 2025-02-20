@@ -1,6 +1,6 @@
-import {Channel} from "@app/models/Chat.ts";
+import {Channel, ChatMessage} from "@app/models/Chat.ts";
 import {NavLink} from "@mantine/core";
-import {useContext, useEffect, useState} from "react";
+import {useContext, useEffect, useMemo, useState} from "react";
 import {ChatContext} from "@app/context/ChatContext.ts";
 import NotificationService from "@app/utils/NotificationService.tsx";
 import {IconPlus} from "@tabler/icons-react";
@@ -19,6 +19,7 @@ export default function ChannelList(
     const {chatService} = useContext(ChatContext);
     const [channels, setChannels] = useState<Channel[]>([]);
     const [createNewChannelModalOpened, setCreateNewChannelModalOpened] = useState(false);
+    const [channelsWithNewMessages, setChannelsWithNewMessages] = useState<{[channelId: string]: boolean}>({});
 
     useEffect(() => {
         const fetch = async () => {
@@ -46,13 +47,21 @@ export default function ChannelList(
     // sign up for events from the WS
     useEffect(() => {
         const listener: MessageListener = {
-            messageTypes: new Set([MessageTypes.ChannelCreated]),
+            messageTypes: new Set([MessageTypes.ChannelCreated, MessageTypes.ReceiveChatMessage]),
             onMessage:(message) => {
-                const channel = (message as MessageWithPayload<Channel>).payload;
-                const newChannels = [...channels, channel];
-                setChannels(newChannels.sort((l, r) => {
-                   return l.name.localeCompare(r.name);
-                }));
+                if (message.type === MessageTypes.ChannelCreated) {
+                    const channel = (message as MessageWithPayload<Channel>).payload;
+                    const newChannels = [...channels, channel];
+                    setChannels(newChannels.sort((l, r) => {
+                        return l.name.localeCompare(r.name);
+                    }));
+                }
+                else if (message.type === MessageTypes.ReceiveChatMessage) {
+                    const chatMessage = (message as MessageWithPayload<ChatMessage>).payload;
+                    if (chatMessage.channelId !== activeChannelId) {
+                        setChannelsWithNewMessages({...channelsWithNewMessages, [chatMessage.channelId]: true});
+                    }
+                }
             }
         };
 
@@ -61,6 +70,12 @@ export default function ChannelList(
             chatService.removeListener(listener)
         }
     });
+
+    useMemo(() => {
+        if (activeChannelId !== null) {
+            setChannelsWithNewMessages({...channelsWithNewMessages, [activeChannelId]: false});
+        }
+    }, [activeChannelId])
 
 
     const clickChannelLink = (channel: Channel) => {
@@ -71,6 +86,8 @@ export default function ChannelList(
         setCreateNewChannelModalOpened(true);
     };
 
+
+
     return (
         <>
             <NavLink
@@ -78,15 +95,30 @@ export default function ChannelList(
                 leftSection={<IconPlus />}
                 onClick={clickCreateNewChannel}
             />
-            {channels.map((channel: Channel) => (
-                <NavLink
-                    key={channel.id}
-                    label={channel.name}
-                    active={channel.id === activeChannelId}
-                    onClick={() => clickChannelLink(channel)}
-                />
-            ))}
+            {channels.map((channel: Channel) => {
+                let props = {}
+                if (activeChannelId === channel.id) {
+                    props = {
+                        active: true,
+                        variant: "filled"
+                    };
+                }
+                else if (channelsWithNewMessages[channel.id]) {
+                    props = {
+                        active: true,
+                        variant: "subtle",
+                    };
+                }
 
+                return (
+                    <NavLink
+                        key={channel.id}
+                        label={channel.name}
+                        onClick={() => clickChannelLink(channel)}
+                        {...props}
+                    />
+                )
+            })}
             <CreateNewChannelModal
                 opened={createNewChannelModalOpened}
                 close={() => setCreateNewChannelModalOpened(false)}
