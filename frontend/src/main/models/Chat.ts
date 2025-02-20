@@ -1,4 +1,4 @@
-export type Message = {
+export type ChatMessage = {
     id: string;
     channelId: string;
     userName: string;

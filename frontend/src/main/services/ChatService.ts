@@ -1,12 +1,18 @@
 import { DateTime } from "luxon";
-import {Channel, Message} from "@app/models/Chat.ts";
+import {Channel, ChatMessage} from "@app/models/Chat.ts";
 import axios from "axios";
+import {Message, MessageTypes} from "@app/models/Messages.ts";
 
 export type ListenerDelegate = (message: Message) => void;
 
+export type MessageListener = {
+    messageTypes: Set<MessageTypes>;
+    onMessage: ListenerDelegate;
+}
+
 export class ChatService {
     ws: WebSocket;
-    listeners: ListenerDelegate[];
+    listeners: MessageListener[];
 
     constructor() {
         this.ws = new WebSocket("ws://localhost:5136/chat/ws");
@@ -24,7 +30,7 @@ export class ChatService {
 
         const message = {
             id: crypto.randomUUID(),
-            type: "SEND_CHAT_MESSAGE",
+            type: MessageTypes.SendChatMessage,
             payload:  {
                 channelId: channelId,
                 userName: name,
@@ -38,29 +44,25 @@ export class ChatService {
     notify(messageJson: string): void {
         const message = JSON.parse(messageJson);
 
-        if (message.type === "RECEIVE_CHAT_MESSAGE") {
-            for (const listener of this.listeners) {
-                listener(message.payload);
+        for (const listener of this.listeners) {
+            if (listener.messageTypes.has(message.type)) {
+                listener.onMessage(message);
             }
-        }
-        else {
-            console.log(`Received a message of type ${message.type} but we aren't processing it now`);
-            console.dir(message)
         }
     }
 
-    addListener(listener: ListenerDelegate): void {
+    addListener(listener: MessageListener): void {
         this.listeners.push(listener)
     }
 
-    removeListener(listener: ListenerDelegate): void {
+    removeListener(listener: MessageListener): void {
         const index = this.listeners.indexOf(listener);
         if (index > -1) {
             this.listeners.splice(index, 1)
         }
     }
 
-    getHistoricalForChannel(channelId: string): Promise<Message[]> {
+    getHistoricalForChannel(channelId: string): Promise<ChatMessage[]> {
         const url = `http://localhost:5136/channel/${channelId}/messages`;
 
         return axios.get(url).then(
@@ -89,10 +91,9 @@ export class ChatService {
             throw new Error("No connection to the server.");
         }
 
-        // TODO: Need to add a type enum for messages
         const message = {
             id: crypto.randomUUID(),
-            type: "CREATE_CHANNEL",
+            type: MessageTypes.CreateChannel,
             payload:  {
                 name
             }

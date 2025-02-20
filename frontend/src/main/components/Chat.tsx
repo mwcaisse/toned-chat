@@ -12,12 +12,13 @@ import {
 } from "@mantine/core";
 import {useContext, useEffect, useRef, useState} from "react";
 import StringUtils from "@app/utils/StringUtils.ts";
-import {ListenerDelegate} from "@app/services/ChatService.ts";
+import {MessageListener} from "@app/services/ChatService.ts";
 import {KeyboardEvent} from "react";
-import {Message} from "@app/models/Chat.ts";
+import {ChatMessage} from "@app/models/Chat.ts";
 import {DateTime} from "luxon";
 import NotificationService from "@app/utils/NotificationService.tsx"
 import {ChatContext} from "@app/context/ChatContext.ts";
+import {MessageTypes, MessageWithPayload} from "@app/models/Messages.ts";
 
 type ChatProps = {
     activeChannelId: string | null;
@@ -26,7 +27,7 @@ type ChatProps = {
 function Chat({activeChannelId}: ChatProps) {
     const [name, setName] = useState("Mitchell");
     const [currentMessage, setCurrentMessage] = useState<string>("");
-    const [messages, setMessages] = useState<Message[]>([]);
+    const [messages, setMessages] = useState<ChatMessage[]>([]);
     const scrollViewport = useRef<HTMLDivElement>(null);
     const [scrolledToBottom, setScrolledToBottom] = useState<boolean>(true);
 
@@ -114,9 +115,15 @@ function Chat({activeChannelId}: ChatProps) {
 
     // sign up for events from the WS
     useEffect(() => {
-        const listener: ListenerDelegate = (message) => {
-            setMessages([...messages, message])
-        }
+        const listener: MessageListener = {
+            messageTypes: new Set([MessageTypes.ReceiveChatMessage]),
+            onMessage:(message) => {
+                const chatMessage = (message as MessageWithPayload<ChatMessage>).payload;
+                if (chatMessage.channelId === activeChannelId) {
+                    setMessages([...messages, chatMessage])
+                }
+            }
+        };
 
         chatService.addListener(listener);
         return () => {

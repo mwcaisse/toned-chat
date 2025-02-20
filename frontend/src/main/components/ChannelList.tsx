@@ -5,6 +5,8 @@ import {ChatContext} from "@app/context/ChatContext.ts";
 import NotificationService from "@app/utils/NotificationService.tsx";
 import {IconPlus} from "@tabler/icons-react";
 import CreateNewChannelModal from "@app/components/CreateNewChannelModal.tsx";
+import {MessageListener} from "@app/services/ChatService.ts";
+import { MessageTypes, MessageWithPayload } from "@app/models/Messages";
 
 type ChannelListProps = {
     activeChannelId: string | null;
@@ -39,7 +41,26 @@ export default function ChannelList(
 
         fetch()
             .catch(console.error);
-    }, [])
+    }, []);
+
+    // sign up for events from the WS
+    useEffect(() => {
+        const listener: MessageListener = {
+            messageTypes: new Set([MessageTypes.ChannelCreated]),
+            onMessage:(message) => {
+                const channel = (message as MessageWithPayload<Channel>).payload;
+                const newChannels = [...channels, channel];
+                setChannels(newChannels.sort((l, r) => {
+                   return l.name.localeCompare(r.name);
+                }));
+            }
+        };
+
+        chatService.addListener(listener);
+        return () => {
+            chatService.removeListener(listener)
+        }
+    });
 
 
     const clickChannelLink = (channel: Channel) => {
