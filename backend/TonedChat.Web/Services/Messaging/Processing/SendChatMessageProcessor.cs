@@ -14,7 +14,7 @@ public class SendChatMessageProcessor : TypedMessageProcessor<SendChatMessage>
         _messageQueue = messageQueue;
     }
 
-    protected override async Task ProcessTypedMessage(SendChatMessage message, CancellationToken cancellationToken = default)
+    protected override async Task ProcessTypedMessage(SendChatMessage message, MessageMetadata metadata, CancellationToken cancellationToken = default)
     {
         var createdChatMessage = await _chatMessageService.AddMessage(message.Payload);
 

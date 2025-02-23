@@ -14,7 +14,7 @@ public class CreateChannelMessageProcessor : TypedMessageProcessor<CreateChannel
         _messageQueue = messageQueue;
     }
 
-    protected override async Task ProcessTypedMessage(CreateChannelMessage message, CancellationToken cancellationToken = default)
+    protected override async Task ProcessTypedMessage(CreateChannelMessage message, MessageMetadata metadata, CancellationToken cancellationToken = default)
     {
         var createdChannel = await _channelService.Create(message.Payload);
 

@@ -11,8 +11,8 @@ public class ForwardingMessageProcessor<T> : TypedMessageProcessor<T> where T : 
         _messageQueue = messageQueue;
     }
 
-    protected override async Task ProcessTypedMessage(T message, CancellationToken cancellationToken = default)
+    protected override async Task ProcessTypedMessage(T message, MessageMetadata metadata, CancellationToken cancellationToken = default)
     {
-        await _messageQueue.AddMessage(message, cancellationToken);
+        await _messageQueue.AddMessage(message, cancellationToken, excludedClients: new HashSet<string>([metadata.SenderClientId]));
     }
 }

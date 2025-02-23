@@ -49,7 +49,7 @@ public class MessageService
         return serviceProvider.GetKeyedService<IMessageProcessor>(message.Type);
     }
     
-    private async Task ProcessMessage(byte[] messageBytes, CancellationToken cancellationToken)
+    private async Task ProcessMessage(byte[] messageBytes, string connectionId, CancellationToken cancellationToken)
     {
         var messageString = Encoding.UTF8.GetString(messageBytes);
         Log.Information("Received the following message from client: " + messageString);
@@ -68,7 +68,11 @@ public class MessageService
             return;
         }
 
-        await messageProcessor.ProcessMessage(message, cancellationToken);
+        var metadata = new MessageMetadata()
+        {
+            SenderClientId = connectionId
+        };
+        await messageProcessor.ProcessMessage(message, metadata, cancellationToken);
     }
 
     private Func<Task> CreateClientReadThread(string connectionId, WebSocket ws)
@@ -109,7 +113,7 @@ public class MessageService
                     var stringBytes = new byte[result.Count];
                     Array.Copy(buffer, 0, stringBytes, 0, result.Count);
 
-                    await ProcessMessage(stringBytes, cancellationToken);
+                    await ProcessMessage(stringBytes, connectionId, cancellationToken);
                 }
             }
             catch (OperationCanceledException ex)
@@ -152,10 +156,9 @@ public class MessageService
 
                 using var scope = _serviceProvider.CreateScope();
 
-                while (_messageQueue.ReadMessage(out var message) && !cancellationToken.IsCancellationRequested)
+                while (_messageQueue.ReadMessage(out var queuedMessage) && !cancellationToken.IsCancellationRequested)
                 {
-                    var messageString = TautSerializer.Serialize(message);
-                    await DispatchMessage(Encoding.UTF8.GetBytes(messageString), cancellationToken);
+                    await DispatchMessage(queuedMessage!, cancellationToken);
                 }
             }
             catch (OperationCanceledException ex)
@@ -176,12 +179,37 @@ public class MessageService
         }
     }
 
-    private async Task DispatchMessage(byte[] message, CancellationToken cancellationToken)
+    private async Task DispatchMessage(QueuedMessage message, CancellationToken cancellationToken)
     {
-        foreach (var ws in _clients.Values)
+        var messageBytes = Encoding.UTF8.GetBytes(TautSerializer.Serialize(message.Message));
+
+        if (message.IncludedClients.Any())
         {
-            await ws.SendAsync(message, WebSocketMessageType.Text, true, cancellationToken);
+            foreach (var includedClient in message.IncludedClients)
+            {
+                if (_clients.TryGetValue(includedClient, out var ws))
+                {
+                    await DispatchTextMessage(messageBytes, ws, cancellationToken);
+                }
+            }
         }
+        else
+        {
+            foreach (var (clientId, ws) in _clients.ToList())
+            {
+                if (message.ExcludedClients.Contains(clientId))
+                {
+                    continue;
+                }
+
+                await DispatchTextMessage(messageBytes, ws, cancellationToken);
+            }
+        }
+    }
+
+    private Task DispatchTextMessage(byte[] message, WebSocket ws, CancellationToken cancellationToken)
+    {
+        return ws.SendAsync(message, WebSocketMessageType.Text, true, cancellationToken);
     }
 
     public void Stop()
