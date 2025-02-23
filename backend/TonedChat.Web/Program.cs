@@ -4,7 +4,9 @@ using NodaTime;
 using Serilog;
 using TonedChat.Web.Data;
 using TonedChat.Web.Endpoints;
+using TonedChat.Web.Models.Messaging;
 using TonedChat.Web.Services;
+using TonedChat.Web.Services.Messaging.Processing;
 using TonedChat.Web.Utils;
 
 
@@ -34,7 +36,14 @@ builder.Services.AddDbContext<TautDatabaseContext>(options =>
 builder.Services.AddScoped<ChatMessageService>();
 builder.Services.AddScoped<ChatChannelService>();
 
+// Our message processors
+builder.Services.AddKeyedScoped<IMessageProcessor, CreateChannelMessageProcessor>(CreateChannelMessage.TYPE);
+builder.Services.AddKeyedScoped<IMessageProcessor, SendChatMessageProcessor>(SendChatMessage.TYPE);
+builder.Services.AddKeyedScoped<IMessageProcessor, ForwardingMessageProcessor<StartedTypingMessage>>(StartedTypingMessage.TYPE);
+builder.Services.AddKeyedScoped<IMessageProcessor, ForwardingMessageProcessor<StoppedTypingMessage>>(StoppedTypingMessage.TYPE);
+
 builder.Services.AddSingleton<MessageService>();
+builder.Services.AddSingleton<MessageQueue>();
 builder.Services.AddHostedService<MessageDispatchBackgroundService>();
 
 builder.Services.AddCors(options =>

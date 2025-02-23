@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading.Channels;
 using Serilog;
 using TonedChat.Web.Models.Messaging;
+using TonedChat.Web.Services.Messaging.Processing;
 using TonedChat.Web.Utils;
 
 namespace TonedChat.Web.Services;
@@ -13,23 +14,18 @@ public class MessageService
 
     private readonly ConcurrentDictionary<string, WebSocket> _clients;
 
-    private readonly Channel<Message> _messageChannel;
-
     private readonly IServiceProvider _serviceProvider;
 
     private readonly CancellationTokenSource _applicationStopTokenSource;
 
-    public MessageService(IServiceProvider serviceProvider)
+    private readonly MessageQueue _messageQueue;
+
+    public MessageService(IServiceProvider serviceProvider, MessageQueue messageQueue)
     {
         _serviceProvider = serviceProvider;
-        
-        _clients = new ConcurrentDictionary<string, WebSocket>();
-        _messageChannel = Channel.CreateUnbounded<Message>(new UnboundedChannelOptions()
-        {
-            SingleReader = true,
-            SingleWriter = false,
-        });
+        _messageQueue = messageQueue;
 
+        _clients = new ConcurrentDictionary<string, WebSocket>();
         _applicationStopTokenSource = new CancellationTokenSource();
     }
 
@@ -48,6 +44,11 @@ public class MessageService
         _clients.TryRemove(connectionId, out _);
     }
 
+    private IMessageProcessor? GetMessageProcessorForMessage(Message message, IServiceProvider serviceProvider)
+    {
+        return serviceProvider.GetKeyedService<IMessageProcessor>(message.Type);
+    }
+    
     private async Task ProcessMessage(byte[] messageBytes, CancellationToken cancellationToken)
     {
         var messageString = Encoding.UTF8.GetString(messageBytes);
@@ -60,39 +61,14 @@ public class MessageService
         }
 
         using var scope = _serviceProvider.CreateScope();
-        switch (message)
+        var messageProcessor = GetMessageProcessorForMessage(message, scope.ServiceProvider);
+        if (messageProcessor == null)
         {
-            case CreateChannelMessage createChannel:
-                var channelService = scope.ServiceProvider.GetRequiredService<ChatChannelService>();
-                var createdChannel = await channelService.Create(createChannel.Payload);
-
-                var notifyChannelMessage = new ChannelCreatedMessage()
-                {
-                    Payload = createdChannel
-                };
-                await _messageChannel.Writer.WriteAsync(notifyChannelMessage, cancellationToken);
-                break;
-            case SendChatMessage sendChat:
-                var chatMessageService = scope.ServiceProvider.GetRequiredService<ChatMessageService>();
-                var createdChatMessage = await chatMessageService.AddMessage(sendChat.Payload);
-
-                var notifyMessage = new ReceiveChatMessage()
-                {
-                    Id = Guid.NewGuid(),
-                    Payload = createdChatMessage
-                };
-                await _messageChannel.Writer.WriteAsync(notifyMessage, cancellationToken);
-                break;
-            case StartedTypingMessage startedTyping:
-                await _messageChannel.Writer.WriteAsync(startedTyping, cancellationToken);
-                break;
-            case StoppedTypingMessage stoppedTyping:
-                await _messageChannel.Writer.WriteAsync(stoppedTyping, cancellationToken);
-                break;
-            default:
-                Log.Information("Unexpected message type!");
-                break;
+            Log.Warning("Could not find a message processor for message type {messageType}", message.Type);
+            return;
         }
+
+        await messageProcessor.ProcessMessage(message, cancellationToken);
     }
 
     private Func<Task> CreateClientReadThread(string connectionId, WebSocket ws)
@@ -161,14 +137,13 @@ public class MessageService
 
     public async Task SendMessagesWork()
     {
-        var reader = _messageChannel.Reader;
         var cancellationToken = _applicationStopTokenSource.Token;
         
         while (!cancellationToken.IsCancellationRequested)
         {
             try
             {
-                if (!await reader.WaitToReadAsync(cancellationToken))
+                if (!await _messageQueue.WaitForMessage(cancellationToken))
                 {
                     // if wait to ready async returns false, it means there will never be data to read from the channel
                     //  again (as it is closed) Nothing more to do here, eject
@@ -177,7 +152,7 @@ public class MessageService
 
                 using var scope = _serviceProvider.CreateScope();
 
-                while (reader.TryRead(out var message) && !cancellationToken.IsCancellationRequested)
+                while (_messageQueue.ReadMessage(out var message) && !cancellationToken.IsCancellationRequested)
                 {
                     var messageString = TautSerializer.Serialize(message);
                     await DispatchMessage(Encoding.UTF8.GetBytes(messageString), cancellationToken);
